@@ -1,0 +1,41 @@
+# Dependencies
+node_modules/
+*/node_modules/
+
+# Build outputs
+dist/
+*/dist/
+build/
+*/build/
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Graphify knowledge graph (rebuild with: graphify update .)
+graphify-out/
+.planning/graphs/
+
+# GSD planning artifacts (optional - uncomment if you don't want to track planning docs)
+# .planning/
+
+# Coverage
+coverage/
+*/coverage/
