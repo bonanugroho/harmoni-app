@@ -5,10 +5,12 @@ import (
 	"database/sql"
 	"fmt"
 
+	"harmoni-api/internal/domain/repository"
+
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-// PostgresPasswordResetTokenRepository implements PasswordResetTokenRepository.
+// PostgresPasswordResetTokenRepository implements repository.PasswordResetTokenRepository.
 type PostgresPasswordResetTokenRepository struct {
 	pool *pgxpool.Pool
 }
@@ -19,7 +21,7 @@ func NewPostgresPasswordResetTokenRepository(pool *pgxpool.Pool) *PostgresPasswo
 }
 
 // Create inserts a new password reset token.
-func (r *PostgresPasswordResetTokenRepository) Create(ctx context.Context, token *PasswordResetToken) error {
+func (r *PostgresPasswordResetTokenRepository) Create(ctx context.Context, token *repository.PasswordResetToken) error {
 	query := `
 		INSERT INTO password_reset_tokens (user_id, token_hash, expires_at, used)
 		VALUES ($1, $2, $3, $4)
@@ -41,14 +43,14 @@ func (r *PostgresPasswordResetTokenRepository) Create(ctx context.Context, token
 }
 
 // FindByTokenHash finds an unused, unexpired token by its hash.
-func (r *PostgresPasswordResetTokenRepository) FindByTokenHash(ctx context.Context, tokenHash string) (*PasswordResetToken, error) {
+func (r *PostgresPasswordResetTokenRepository) FindByTokenHash(ctx context.Context, tokenHash string) (*repository.PasswordResetToken, error) {
 	query := `
 		SELECT id, user_id, token_hash, expires_at, used, created_at
 		FROM password_reset_tokens
 		WHERE token_hash = $1 AND used = false AND expires_at > NOW()
 	`
 
-	token := &PasswordResetToken{}
+	token := &repository.PasswordResetToken{}
 	err := r.pool.QueryRow(ctx, query, tokenHash).Scan(
 		&token.ID,
 		&token.UserID,
