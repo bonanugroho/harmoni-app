@@ -28,12 +28,12 @@ func main() {
 	defer db.Close()
 
 	// Run pending migrations on startup
-	exe, err := os.Executable()
+	// Use working directory (where the binary is executed from) to find migrations
+	wd, err := os.Getwd()
 	if err != nil {
-		log.Fatalf("Failed to determine executable path: %v", err)
+		log.Fatalf("Failed to get working directory: %v", err)
 	}
-	baseDir := filepath.Dir(filepath.Dir(filepath.Dir(exe)))
-	migrationsPath := filepath.Join(baseDir, "migrations")
+	migrationsPath := filepath.Join(wd, "migrations")
 	if err := database.RunMigrations(cfg.DatabaseURL, migrationsPath); err != nil {
 		log.Fatalf("Failed to run database migrations: %v", err)
 	}
