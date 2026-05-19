@@ -13,6 +13,7 @@ type Config struct {
 	DatabaseURL     string `mapstructure:"DATABASE_URL"`
 	PasetoSecretKey string `mapstructure:"PASETO_SECRET_KEY"`
 	EmailAPIKey     string `mapstructure:"EMAIL_API_KEY"`
+	FromEmail       string `mapstructure:"FROM_EMAIL"`
 	AppEnv          string `mapstructure:"APP_ENV"`
 	AppPort         string `mapstructure:"APP_PORT"`
 }

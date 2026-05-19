@@ -7,7 +7,12 @@ import (
 	"path/filepath"
 
 	"harmoni-api/internal/config"
+	httphandler "harmoni-api/internal/delivery/http"
+	"harmoni-api/internal/domain/service"
+	infraauth "harmoni-api/internal/infrastructure/auth"
 	"harmoni-api/internal/infrastructure/database"
+	"harmoni-api/internal/infrastructure/email"
+	infrarepo "harmoni-api/internal/infrastructure/repository"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -38,6 +43,25 @@ func main() {
 		log.Fatalf("Failed to run database migrations: %v", err)
 	}
 
+	// Initialize repositories
+	userRepo := infrarepo.NewPostgresUserRepository(db.Pool)
+	resetTokenRepo := infrarepo.NewPostgresPasswordResetTokenRepository(db.Pool)
+
+	// Initialize services
+	pasetoService, err := infraauth.NewPasetoService(cfg.PasetoSecretKey)
+	if err != nil {
+		log.Fatalf("Failed to initialize PASETO service: %v", err)
+	}
+	emailService := email.NewResendEmailService(cfg.EmailAPIKey, cfg.FromEmail)
+
+	authService := service.NewAuthService(
+		userRepo,
+		resetTokenRepo,
+		pasetoService,
+		emailService,
+		"http://localhost:5173", // Frontend URL for reset links
+	)
+
 	// Initialize Fiber app
 	app := fiber.New(fiber.Config{
 		ErrorHandler: func(c *fiber.Ctx, err error) error {
@@ -63,6 +87,10 @@ func main() {
 			"database": dbStatus,
 		})
 	})
+
+	// Register auth routes
+	authHandler := httphandler.NewAuthHandler(authService)
+	authHandler.RegisterRoutes(app)
 
 	// Start server
 	port := cfg.AppPort
