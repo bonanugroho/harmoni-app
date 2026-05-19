@@ -1,10 +1,13 @@
 package main
 
 import (
+	"context"
 	"log"
 	"os"
+	"path/filepath"
 
 	"harmoni-api/internal/config"
+	"harmoni-api/internal/infrastructure/database"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -14,6 +17,25 @@ func main() {
 	cfg, err := config.LoadEnv()
 	if err != nil {
 		log.Fatalf("Failed to load environment configuration: %v", err)
+	}
+
+	// Establish database connection pool
+	ctx := context.Background()
+	db, err := database.NewConnection(ctx, cfg.DatabaseURL)
+	if err != nil {
+		log.Fatalf("Failed to connect to database: %v", err)
+	}
+	defer db.Close()
+
+	// Run pending migrations on startup
+	exe, err := os.Executable()
+	if err != nil {
+		log.Fatalf("Failed to determine executable path: %v", err)
+	}
+	baseDir := filepath.Dir(filepath.Dir(filepath.Dir(exe)))
+	migrationsPath := filepath.Join(baseDir, "migrations")
+	if err := database.RunMigrations(cfg.DatabaseURL, migrationsPath); err != nil {
+		log.Fatalf("Failed to run database migrations: %v", err)
 	}
 
 	// Initialize Fiber app
@@ -29,10 +51,16 @@ func main() {
 		},
 	})
 
-	// Health check endpoint
+	// Health check endpoint with database status
 	app.Get("/health", func(c *fiber.Ctx) error {
+		dbStatus := "connected"
+		if err := db.HealthCheck(c.Context()); err != nil {
+			dbStatus = "disconnected"
+			log.Printf("Health check: database connection failed: %v", err)
+		}
 		return c.JSON(fiber.Map{
-			"status": "ok",
+			"status":   "ok",
+			"database": dbStatus,
 		})
 	})
 
