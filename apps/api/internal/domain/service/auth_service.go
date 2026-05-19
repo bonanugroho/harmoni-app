@@ -1,6 +1,7 @@
 package service
 
 import (
+	"context"
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/hex"
@@ -60,7 +61,8 @@ func (s *AuthService) Register(email, password, fullName, territoryID string) (*
 	}
 
 	// Check if email already exists
-	_, err := s.userRepo.FindByEmail(nil, email)
+	ctx := context.Background()
+	_, err := s.userRepo.FindByEmail(ctx, email)
 	if err == nil {
 		return nil, ErrDuplicateEmail
 	}
@@ -81,7 +83,7 @@ func (s *AuthService) Register(email, password, fullName, territoryID string) (*
 		IsActive:     true,
 	}
 
-	created, err := s.userRepo.Create(nil, user)
+	created, err := s.userRepo.Create(ctx, user)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create user: %w", err)
 	}
@@ -91,7 +93,8 @@ func (s *AuthService) Register(email, password, fullName, territoryID string) (*
 
 // Login authenticates a user and returns a PASETO token.
 func (s *AuthService) Login(email, password string) (*entity.User, string, error) {
-	user, err := s.userRepo.FindByEmail(nil, email)
+	ctx := context.Background()
+	user, err := s.userRepo.FindByEmail(ctx, email)
 	if err != nil {
 		return nil, "", ErrInvalidCredentials
 	}
@@ -122,8 +125,9 @@ func hashToken(token string) string {
 
 // ResetPasswordRequest initiates a password reset flow.
 func (s *AuthService) ResetPasswordRequest(email string) error {
+	ctx := context.Background()
 	// Find user — but always return success to prevent email enumeration
-	user, err := s.userRepo.FindByEmail(nil, email)
+	user, err := s.userRepo.FindByEmail(ctx, email)
 	if err != nil {
 		// User not found — still return nil to prevent enumeration
 		return nil
@@ -146,7 +150,7 @@ func (s *AuthService) ResetPasswordRequest(email string) error {
 		Used:      false,
 	}
 
-	if err := s.resetRepo.Create(nil, resetToken); err != nil {
+	if err := s.resetRepo.Create(ctx, resetToken); err != nil {
 		return fmt.Errorf("failed to store reset token: %w", err)
 	}
 
@@ -161,6 +165,7 @@ func (s *AuthService) ResetPasswordRequest(email string) error {
 
 // ResetPassword completes a password reset using a token.
 func (s *AuthService) ResetPassword(token, newPassword string) error {
+	ctx := context.Background()
 	// Validate new password
 	if err := auth.ValidatePassword(newPassword); err != nil {
 		return fmt.Errorf("password validation failed: %w", err)
@@ -170,7 +175,7 @@ func (s *AuthService) ResetPassword(token, newPassword string) error {
 	tokenHash := hashToken(token)
 
 	// Find the reset token record
-	record, err := s.resetRepo.FindByTokenHash(nil, tokenHash)
+	record, err := s.resetRepo.FindByTokenHash(ctx, tokenHash)
 	if err != nil {
 		return ErrInvalidResetToken
 	}
@@ -191,12 +196,12 @@ func (s *AuthService) ResetPassword(token, newPassword string) error {
 	}
 
 	// Update password
-	if err := s.userRepo.UpdatePassword(nil, record.UserID, newHash); err != nil {
+	if err := s.userRepo.UpdatePassword(ctx, record.UserID, newHash); err != nil {
 		return fmt.Errorf("failed to update password: %w", err)
 	}
 
 	// Mark token as used
-	if err := s.resetRepo.MarkUsed(nil, record.ID); err != nil {
+	if err := s.resetRepo.MarkUsed(ctx, record.ID); err != nil {
 		return fmt.Errorf("failed to mark token as used: %w", err)
 	}
 
