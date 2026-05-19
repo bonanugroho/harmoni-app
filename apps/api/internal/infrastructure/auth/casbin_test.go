@@ -182,6 +182,64 @@ func TestCasbinEnforcer_GetEnforcer_NotInitialized(t *testing.T) {
 	}
 }
 
+func TestCasbinEnforcer_EnforceWithTerritory_RWOfficer(t *testing.T) {
+	// Reset singleton for test
+	enforcerOnce = sync.Once{}
+	enforcerInstance = nil
+	enforcerErr = nil
+
+	ce, err := InitEnforcer("../../../rbac_model.conf", "../../../policy.csv")
+	if err != nil {
+		t.Fatalf("InitEnforcer failed: %v", err)
+	}
+
+	// RW officer with * domain should have access
+	ok, err := ce.EnforceWithTerritory("rw_officer", "tenant", "read", "rt-01", true)
+	if err != nil {
+		t.Fatalf("EnforceWithTerritory error: %v", err)
+	}
+	if !ok {
+		t.Error("rw_officer should be allowed to read tenant (uses * domain)")
+	}
+
+	// RW officer writing should also succeed
+	ok, err = ce.EnforceWithTerritory("rw_officer", "income", "write", "rt-02", true)
+	if err != nil {
+		t.Fatalf("EnforceWithTerritory error: %v", err)
+	}
+	if !ok {
+		t.Error("rw_officer should be allowed to write income (uses * domain)")
+	}
+}
+
+func TestCasbinEnforcer_ResetEnforcerForTest(t *testing.T) {
+	// Initialize first
+	enforcerOnce = sync.Once{}
+	enforcerInstance = nil
+	enforcerErr = nil
+
+	_, err := InitEnforcer("../../../rbac_model.conf", "../../../policy.csv")
+	if err != nil {
+		t.Fatalf("InitEnforcer failed: %v", err)
+	}
+
+	// Verify it's initialized
+	if enforcerInstance == nil {
+		t.Fatal("enforcer should be initialized")
+	}
+
+	// Reset
+	ResetEnforcerForTest()
+
+	// Verify it's reset
+	if enforcerInstance != nil {
+		t.Error("enforcer should be nil after reset")
+	}
+	if enforcerErr != nil {
+		t.Error("enforcerErr should be nil after reset")
+	}
+}
+
 func TestCasbinEnforcer_Singleton(t *testing.T) {
 	// Reset singleton
 	enforcerOnce = sync.Once{}
