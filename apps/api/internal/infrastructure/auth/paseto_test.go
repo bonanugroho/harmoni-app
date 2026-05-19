@@ -109,3 +109,35 @@ func TestPaseto_NewServiceInvalidKey(t *testing.T) {
 		})
 	}
 }
+
+func TestPaseto_ValidateTokenConstantTime(t *testing.T) {
+	a := []byte("token-a")
+	b := []byte("token-a")
+	c := []byte("token-b")
+
+	if !ValidateTokenConstantTime(a, b) {
+		t.Error("ValidateTokenConstantTime(a, a) should be true")
+	}
+	if ValidateTokenConstantTime(a, c) {
+		t.Error("ValidateTokenConstantTime(a, b) should be false for different tokens")
+	}
+}
+
+func TestPaseto_TokenClaimsExpiryFuture(t *testing.T) {
+	svc := newTestService(t)
+
+	token, err := svc.GenerateToken("user-123", "resident", "rt-01", time.Hour)
+	if err != nil {
+		t.Fatalf("GenerateToken() error = %v", err)
+	}
+
+	claims, err := svc.ValidateToken(token)
+	if err != nil {
+		t.Fatalf("ValidateToken() error = %v", err)
+	}
+
+	// Expiry should be approximately 1 hour from now
+	if claims.Expiration.Before(time.Now()) {
+		t.Error("Token expiration should be in the future")
+	}
+}
