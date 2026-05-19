@@ -92,6 +92,16 @@ func main() {
 	authHandler := httphandler.NewAuthHandler(authService)
 	authHandler.RegisterRoutes(app)
 
+	// Initialize Casbin enforcer
+	enforcer, err := infraauth.InitEnforcer("rbac_model.conf", "policy.csv")
+	if err != nil {
+		log.Fatalf("Failed to initialize Casbin enforcer: %v", err)
+	}
+
+	// Register protected routes with auth → casbin middleware chain
+	protectedHandler := httphandler.NewProtectedHandler(enforcer)
+	protectedHandler.RegisterRoutes(app, pasetoService)
+
 	// Start server
 	port := cfg.AppPort
 	if port == "" {

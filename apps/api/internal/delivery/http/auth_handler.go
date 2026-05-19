@@ -1,6 +1,7 @@
 package http
 
 import (
+	"log"
 	"time"
 
 	"harmoni-api/internal/domain/service"
@@ -157,10 +158,11 @@ func (h *AuthHandler) ResetPasswordRequest(c *fiber.Ctx) error {
 	// Always return 200 to prevent email enumeration
 	err := h.authService.ResetPasswordRequest(req.Email)
 	if err != nil {
-		// Log the error but don't expose it to the client
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "Failed to process reset request",
-			"code":  "RESET_FAILED",
+		// Log the actual error for debugging
+		log.Printf("Password reset request failed for %s: %v", req.Email, err)
+		// Still return 200 to prevent email enumeration
+		return c.JSON(fiber.Map{
+			"message": "If an account exists with that email, a password reset link has been sent",
 		})
 	}
 
