@@ -351,3 +351,76 @@ func TestAuthService_ResetPassword_WeakNewPassword(t *testing.T) {
 		t.Fatal("ResetPassword() expected error for weak new password, got nil")
 	}
 }
+
+func TestAuthService_ResetPassword_ExpiredToken(t *testing.T) {
+	svc, _, resetRepo, _ := newTestAuthService(t)
+
+	// Register a user
+	_, err := svc.Register("test@example.com", "SecurePass123!", "Test User", "rt-01")
+	if err != nil {
+		t.Fatalf("Register() error = %v", err)
+	}
+
+	// Create an expired reset token
+	tokenHash := hashToken("expired-token")
+	resetToken := &repository.PasswordResetToken{
+		ID:        "reset-expired",
+		UserID:    "test-uuid-v7",
+		TokenHash: tokenHash,
+		ExpiresAt: time.Now().Add(-time.Hour), // Expired 1 hour ago
+		Used:      false,
+	}
+	resetRepo.tokens[tokenHash] = resetToken
+
+	// Try to reset with expired token
+	err = svc.ResetPassword("expired-token", "NewSecurePass456!")
+	if !errors.Is(err, ErrInvalidResetToken) {
+		t.Errorf("ResetPassword() error = %v, want ErrInvalidResetToken for expired token", err)
+	}
+}
+
+func TestAuthService_ResetPassword_UsedToken(t *testing.T) {
+	svc, _, resetRepo, _ := newTestAuthService(t)
+
+	// Register a user
+	_, err := svc.Register("test@example.com", "SecurePass123!", "Test User", "rt-01")
+	if err != nil {
+		t.Fatalf("Register() error = %v", err)
+	}
+
+	// Create an already-used reset token
+	tokenHash := hashToken("used-token")
+	resetToken := &repository.PasswordResetToken{
+		ID:        "reset-used",
+		UserID:    "test-uuid-v7",
+		TokenHash: tokenHash,
+		ExpiresAt: time.Now().Add(time.Hour),
+		Used:      true,
+	}
+	resetRepo.tokens[tokenHash] = resetToken
+
+	// Try to reset with used token
+	err = svc.ResetPassword("used-token", "NewSecurePass456!")
+	if !errors.Is(err, ErrResetTokenUsed) {
+		t.Errorf("ResetPassword() error = %v, want ErrResetTokenUsed", err)
+	}
+}
+
+func TestAuthService_Login_InactiveUser(t *testing.T) {
+	svc, userRepo, _, _ := newTestAuthService(t)
+
+	// Register a user
+	_, err := svc.Register("test@example.com", "SecurePass123!", "Test User", "rt-01")
+	if err != nil {
+		t.Fatalf("Register() error = %v", err)
+	}
+
+	// Deactivate the user
+	userRepo.users["test-uuid-v7"].IsActive = false
+
+	// Try to login with inactive user
+	_, _, err = svc.Login("test@example.com", "SecurePass123!")
+	if !errors.Is(err, ErrInactiveUser) {
+		t.Errorf("Login() error = %v, want ErrInactiveUser", err)
+	}
+}

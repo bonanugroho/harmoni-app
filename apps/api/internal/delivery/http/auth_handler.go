@@ -1,21 +1,24 @@
 package http
 
 import (
+	"log"
 	"time"
 
 	"harmoni-api/internal/domain/service"
+	"harmoni-api/internal/infrastructure/auth"
 
 	"github.com/gofiber/fiber/v2"
 )
 
 // AuthHandler handles authentication HTTP endpoints.
 type AuthHandler struct {
-	authService *service.AuthService
+	authService  *service.AuthService
+	pasetoService *auth.PasetoService
 }
 
 // NewAuthHandler creates a new auth handler.
-func NewAuthHandler(authService *service.AuthService) *AuthHandler {
-	return &AuthHandler{authService: authService}
+func NewAuthHandler(authService *service.AuthService, pasetoService *auth.PasetoService) *AuthHandler {
+	return &AuthHandler{authService: authService, pasetoService: pasetoService}
 }
 
 // RegisterRoutes registers auth endpoints on the Fiber app.
@@ -25,6 +28,7 @@ func (h *AuthHandler) RegisterRoutes(app *fiber.App) {
 	api.Post("/login", h.Login)
 	api.Post("/reset", h.ResetPasswordRequest)
 	api.Post("/reset/confirm", h.ResetPasswordConfirm)
+	api.Get("/me", h.Me)
 }
 
 // RegisterRequest represents the registration request body.
@@ -157,10 +161,11 @@ func (h *AuthHandler) ResetPasswordRequest(c *fiber.Ctx) error {
 	// Always return 200 to prevent email enumeration
 	err := h.authService.ResetPasswordRequest(req.Email)
 	if err != nil {
-		// Log the error but don't expose it to the client
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "Failed to process reset request",
-			"code":  "RESET_FAILED",
+		// Log the actual error for debugging
+		log.Printf("Password reset request failed for %s: %v", req.Email, err)
+		// Still return 200 to prevent email enumeration
+		return c.JSON(fiber.Map{
+			"message": "If an account exists with that email, a password reset link has been sent",
 		})
 	}
 
@@ -215,6 +220,33 @@ func (h *AuthHandler) ResetPasswordConfirm(c *fiber.Ctx) error {
 
 	return c.JSON(fiber.Map{
 		"message": "Password updated successfully",
+	})
+}
+
+// Me handles GET /auth/me — returns the authenticated user from the PASETO cookie.
+func (h *AuthHandler) Me(c *fiber.Ctx) error {
+	token := c.Cookies("paseto_token")
+	if token == "" {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"error": "No authentication token",
+			"code":  "MISSING_TOKEN",
+		})
+	}
+
+	claims, err := h.pasetoService.ValidateToken(token)
+	if err != nil {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"error": "Invalid or expired token",
+			"code":  "INVALID_TOKEN",
+		})
+	}
+
+	return c.JSON(fiber.Map{
+		"user": fiber.Map{
+			"id":           claims.UserID,
+			"role":         claims.Role,
+			"territory_id": claims.TerritoryID,
+		},
 	})
 }
 
