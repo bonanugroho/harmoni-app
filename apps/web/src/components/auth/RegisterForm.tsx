@@ -1,15 +1,26 @@
-import { useState } from 'react';
+import { useState, type FormEvent, type ChangeEvent } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { register } from '../../services/auth';
 
-const TERRITORIES = [
+interface Territory {
+  id: string;
+  name: string;
+}
+
+interface PasswordStrength {
+  level: string;
+  label: string;
+  color: string;
+}
+
+const TERRITORIES: Territory[] = [
   { id: 'rt-01', name: 'RT 01' },
   { id: 'rt-02', name: 'RT 02' },
   { id: 'rw-01', name: 'RW 01' },
 ];
 
-function validatePassword(password) {
-  const errors = [];
+function validatePassword(password: string): string[] {
+  const errors: string[] = [];
   if (password.length < 8) {
     errors.push('Password must be at least 8 characters.');
   }
@@ -28,7 +39,7 @@ function validatePassword(password) {
   return errors;
 }
 
-function getPasswordStrength(password) {
+function getPasswordStrength(password: string): PasswordStrength {
   if (!password) return { level: '', label: '', color: '' };
 
   let score = 0;
@@ -52,21 +63,21 @@ export default function RegisterForm() {
   const [territoryId, setTerritoryId] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [fieldErrors, setFieldErrors] = useState({});
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
-  function validateEmail(value) {
+  function validateEmail(value: string): string {
     if (!value) return 'This field is required.';
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(value)) return 'Enter a valid email address.';
     return '';
   }
 
-  function handleSubmit(e) {
+  function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError('');
     setFieldErrors({});
 
-    const errors = {};
+    const errors: Record<string, string> = {};
     if (!fullName.trim()) errors.fullName = 'This field is required.';
     const emailError = validateEmail(email);
     if (emailError) errors.email = emailError;
@@ -86,7 +97,7 @@ export default function RegisterForm() {
       .then(() => {
         navigate('/login');
       })
-      .catch((err) => {
+      .catch((err: Error) => {
         if (err.message.includes('already registered')) {
           setFieldErrors({ email: 'An account with this email already exists. Try signing in instead.' });
         } else {
@@ -116,7 +127,7 @@ export default function RegisterForm() {
           id="fullName"
           type="text"
           value={fullName}
-          onChange={(e) => setFullName(e.target.value)}
+          onChange={(e: ChangeEvent<HTMLInputElement>) => setFullName(e.target.value)}
           className={`min-h-[44px] w-full rounded-md border px-3 py-2 text-base outline-none transition-colors ${
             fieldErrors.fullName
               ? 'border-red-600 focus:border-red-600'
@@ -141,7 +152,7 @@ export default function RegisterForm() {
           id="email"
           type="email"
           value={email}
-          onChange={(e) => setEmail(e.target.value)}
+          onChange={(e: ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
           className={`min-h-[44px] w-full rounded-md border px-3 py-2 text-base outline-none transition-colors ${
             fieldErrors.email
               ? 'border-red-600 focus:border-red-600'
@@ -166,7 +177,7 @@ export default function RegisterForm() {
           id="password"
           type="password"
           value={password}
-          onChange={(e) => setPassword(e.target.value)}
+          onChange={(e: ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
           className={`min-h-[44px] w-full rounded-md border px-3 py-2 text-base outline-none transition-colors ${
             fieldErrors.password
               ? 'border-red-600 focus:border-red-600'
@@ -199,7 +210,7 @@ export default function RegisterForm() {
           id="confirmPassword"
           type="password"
           value={confirmPassword}
-          onChange={(e) => setConfirmPassword(e.target.value)}
+          onChange={(e: ChangeEvent<HTMLInputElement>) => setConfirmPassword(e.target.value)}
           className={`min-h-[44px] w-full rounded-md border px-3 py-2 text-base outline-none transition-colors ${
             fieldErrors.confirmPassword
               ? 'border-red-600 focus:border-red-600'
@@ -223,7 +234,7 @@ export default function RegisterForm() {
         <select
           id="territory"
           value={territoryId}
-          onChange={(e) => setTerritoryId(e.target.value)}
+          onChange={(e: ChangeEvent<HTMLSelectElement>) => setTerritoryId(e.target.value)}
           className={`min-h-[44px] w-full rounded-md border px-3 py-2 text-base outline-none transition-colors ${
             fieldErrors.territoryId
               ? 'border-red-600 focus:border-red-600'

@@ -30,7 +30,7 @@ describe('LoginForm', () => {
   });
 
   it('shows disabled submit button during loading state', async () => {
-    auth.login.mockReturnValue(new Promise(() => {})); // Never resolves
+    (auth.login as ReturnType<typeof vi.fn>).mockReturnValue(new Promise(() => {}));
     renderLoginForm();
 
     fireEvent.change(screen.getByLabelText(/email/i), {
@@ -70,7 +70,7 @@ describe('LoginForm', () => {
   });
 
   it('redirects to /dashboard on successful login', async () => {
-    auth.login.mockResolvedValue({ user: { id: '1' } });
+    (auth.login as ReturnType<typeof vi.fn>).mockResolvedValue({ user: { id: '1' } });
     renderLoginForm();
 
     fireEvent.change(screen.getByLabelText(/email/i), {
@@ -87,7 +87,7 @@ describe('LoginForm', () => {
   });
 
   it('shows error message from API on failed login', async () => {
-    auth.login.mockRejectedValue(new Error('Invalid email or password'));
+    (auth.login as ReturnType<typeof vi.fn>).mockRejectedValue(new Error('Invalid email or password'));
     renderLoginForm();
 
     fireEvent.change(screen.getByLabelText(/email/i), {

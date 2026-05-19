@@ -31,7 +31,7 @@ describe('ResetPasswordForm', () => {
     });
 
     it('submitting email shows "Reset link sent" message', async () => {
-      auth.requestPasswordReset.mockResolvedValue({ message: 'Reset link sent' });
+      (auth.requestPasswordReset as ReturnType<typeof vi.fn>).mockResolvedValue({ message: 'Reset link sent' });
       renderResetForm();
 
       fireEvent.change(screen.getByLabelText(/email/i), {
@@ -79,7 +79,7 @@ describe('ResetPasswordForm', () => {
     });
 
     it('successful reset redirects to /login', async () => {
-      auth.confirmPasswordReset.mockResolvedValue({ message: 'Password updated' });
+      (auth.confirmPasswordReset as ReturnType<typeof vi.fn>).mockResolvedValue({ message: 'Password updated' });
       renderResetForm(['/reset?token=test-token-123']);
 
       fireEvent.change(screen.getByLabelText(/new password/i), {
@@ -96,7 +96,7 @@ describe('ResetPasswordForm', () => {
     });
 
     it('invalid/expired token shows "Invalid or expired reset token" error', async () => {
-      auth.confirmPasswordReset.mockRejectedValue(new Error('Invalid or expired reset token'));
+      (auth.confirmPasswordReset as ReturnType<typeof vi.fn>).mockRejectedValue(new Error('Invalid or expired reset token'));
       renderResetForm(['/reset?token=expired-token']);
 
       fireEvent.change(screen.getByLabelText(/new password/i), {
@@ -106,7 +106,6 @@ describe('ResetPasswordForm', () => {
         target: { value: 'SecurePass123!' },
       });
 
-      // Submit the form
       const form = screen.getByRole('button', { name: /update password/i });
       fireEvent.click(form);
 

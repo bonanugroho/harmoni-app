@@ -2,11 +2,11 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import ProtectedRoute, { AuthContext, useAuth } from './ProtectedRoute';
+import type { User } from '../types/auth';
 
-// Mock fetch
 global.fetch = vi.fn();
 
-function renderWithRouter(ui, { initialEntries = ['/protected'] } = {}) {
+function renderWithRouter(ui: React.ReactNode, { initialEntries = ['/protected'] }: { initialEntries?: string[] } = {}) {
   return render(
     <MemoryRouter initialEntries={initialEntries}>
       <Routes>
@@ -23,7 +23,7 @@ describe('ProtectedRoute', () => {
   });
 
   it('redirects to /login when not authenticated', async () => {
-    fetch.mockResolvedValue({ ok: false });
+    (fetch as ReturnType<typeof vi.fn>).mockResolvedValue({ ok: false });
 
     renderWithRouter(
       <ProtectedRoute>
@@ -37,7 +37,7 @@ describe('ProtectedRoute', () => {
   });
 
   it('renders children when authenticated', async () => {
-    fetch.mockResolvedValue({
+    (fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
       ok: true,
       json: () => Promise.resolve({ user: { id: '1', email: 'test@test.com', role: 'resident' } }),
     });
@@ -54,7 +54,7 @@ describe('ProtectedRoute', () => {
   });
 
   it('passes user data to children via context', async () => {
-    fetch.mockResolvedValue({
+    (fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
       ok: true,
       json: () => Promise.resolve({ user: { id: '1', email: 'test@test.com', role: 'resident' } }),
     });
@@ -76,9 +76,9 @@ describe('ProtectedRoute', () => {
   });
 
   it('restricts access by role when requiredRole prop is set', async () => {
-    fetch.mockResolvedValue({
+    (fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
       ok: true,
-      json: () => Promise.resolve({ user: { id: '1', email: 'test@test.com', role: 'resident' } }),
+      json: () => Promise.resolve({ user: { id: '1', email: 'test@test.com', role: 'resident' } as User }),
     });
 
     renderWithRouter(
@@ -93,9 +93,9 @@ describe('ProtectedRoute', () => {
   });
 
   it('allows access when user has required role', async () => {
-    fetch.mockResolvedValue({
+    (fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
       ok: true,
-      json: () => Promise.resolve({ user: { id: '1', email: 'test@test.com', role: 'rt_officer' } }),
+      json: () => Promise.resolve({ user: { id: '1', email: 'test@test.com', role: 'rt_officer' } as User }),
     });
 
     renderWithRouter(
@@ -110,8 +110,7 @@ describe('ProtectedRoute', () => {
   });
 
   it('shows loading spinner while checking auth status', () => {
-    // Return a promise that never resolves to simulate loading
-    fetch.mockReturnValue(new Promise(() => {}));
+    (fetch as ReturnType<typeof vi.fn>).mockReturnValue(new Promise(() => {}));
 
     renderWithRouter(
       <ProtectedRoute>

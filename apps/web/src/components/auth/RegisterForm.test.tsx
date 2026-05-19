@@ -49,12 +49,10 @@ describe('RegisterForm', () => {
 
     const passwordInput = screen.getByLabelText(/^password$/i);
 
-    // Weak password
     fireEvent.change(passwordInput, { target: { value: 'password' } });
     expect(screen.getByText(/password strength: weak/i)).toBeInTheDocument();
     expect(screen.getByText(/password strength: weak/i)).toHaveClass('text-red-600');
 
-    // Strong password
     fireEvent.change(passwordInput, { target: { value: 'SecurePass123!' } });
     expect(screen.getByText(/password strength: strong/i)).toBeInTheDocument();
     expect(screen.getByText(/password strength: strong/i)).toHaveClass('text-green-600');
@@ -85,7 +83,7 @@ describe('RegisterForm', () => {
   });
 
   it('redirects to /login on successful registration', async () => {
-    auth.register.mockResolvedValue({ id: '1' });
+    (auth.register as ReturnType<typeof vi.fn>).mockResolvedValue({ id: '1' });
     renderRegisterForm();
 
     fireEvent.change(screen.getByLabelText(/full name/i), {
@@ -116,7 +114,7 @@ describe('RegisterForm', () => {
   });
 
   it('shows "Email already registered" error for duplicate email', async () => {
-    auth.register.mockRejectedValue(new Error('Email already registered'));
+    (auth.register as ReturnType<typeof vi.fn>).mockRejectedValue(new Error('Email already registered'));
     renderRegisterForm();
 
     fireEvent.change(screen.getByLabelText(/full name/i), {

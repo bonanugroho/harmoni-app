@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type FormEvent, type ChangeEvent } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { login } from '../../services/auth';
 
@@ -8,21 +8,21 @@ export default function LoginForm() {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [fieldErrors, setFieldErrors] = useState({});
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
-  function validateEmail(value) {
+  function validateEmail(value: string): string {
     if (!value) return 'This field is required.';
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(value)) return 'Enter a valid email address.';
     return '';
   }
 
-  function validatePassword(value) {
+  function validatePassword(value: string): string {
     if (!value) return 'Password is required';
     return '';
   }
 
-  function handleSubmit(e) {
+  function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError('');
     setFieldErrors({});
@@ -41,7 +41,7 @@ export default function LoginForm() {
       .then(() => {
         navigate('/dashboard');
       })
-      .catch((err) => {
+      .catch((err: Error) => {
         setError(err.message);
       })
       .finally(() => {
@@ -65,7 +65,7 @@ export default function LoginForm() {
           id="email"
           type="email"
           value={email}
-          onChange={(e) => setEmail(e.target.value)}
+          onChange={(e: ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
           className={`min-h-[44px] w-full rounded-md border px-3 py-2 text-base outline-none transition-colors ${
             fieldErrors.email
               ? 'border-red-600 focus:border-red-600'
@@ -91,7 +91,7 @@ export default function LoginForm() {
           id="password"
           type="password"
           value={password}
-          onChange={(e) => setPassword(e.target.value)}
+          onChange={(e: ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
           className={`min-h-[44px] w-full rounded-md border px-3 py-2 text-base outline-none transition-colors ${
             fieldErrors.password
               ? 'border-red-600 focus:border-red-600'

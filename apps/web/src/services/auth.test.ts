@@ -12,7 +12,7 @@ describe('auth service', () => {
 
   describe('login', () => {
     it('sends POST to /auth/login with credentials: include', async () => {
-      fetch.mockResolvedValue({
+      (fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
         ok: true,
         json: () => Promise.resolve({ user: { id: '1', email: 'test@test.com' } }),
       });
@@ -31,7 +31,7 @@ describe('auth service', () => {
 
     it('returns user data on success', async () => {
       const mockUser = { id: '1', email: 'test@test.com' };
-      fetch.mockResolvedValue({
+      (fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
         ok: true,
         json: () => Promise.resolve({ user: mockUser }),
       });
@@ -42,7 +42,7 @@ describe('auth service', () => {
     });
 
     it('throws error on invalid credentials', async () => {
-      fetch.mockResolvedValue({
+      (fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
         ok: false,
         json: () => Promise.resolve({ error: 'Invalid email or password', code: 'INVALID_CREDENTIALS' }),
       });
@@ -53,7 +53,7 @@ describe('auth service', () => {
 
   describe('register', () => {
     it('sends POST to /auth/register with user data', async () => {
-      fetch.mockResolvedValue({
+      (fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
         ok: true,
         json: () => Promise.resolve({ id: '1' }),
       });
@@ -81,7 +81,7 @@ describe('auth service', () => {
     });
 
     it('throws error on duplicate email', async () => {
-      fetch.mockResolvedValue({
+      (fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
         ok: false,
         json: () => Promise.resolve({ error: 'Email already registered', code: 'DUPLICATE_EMAIL' }),
       });
@@ -94,7 +94,7 @@ describe('auth service', () => {
 
   describe('requestPasswordReset', () => {
     it('sends POST to /auth/reset', async () => {
-      fetch.mockResolvedValue({
+      (fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
         ok: true,
         json: () => Promise.resolve({ message: 'Reset link sent' }),
       });
@@ -114,7 +114,7 @@ describe('auth service', () => {
 
   describe('confirmPasswordReset', () => {
     it('sends POST to /auth/reset/confirm', async () => {
-      fetch.mockResolvedValue({
+      (fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
         ok: true,
         json: () => Promise.resolve({ message: 'Password updated' }),
       });
@@ -132,7 +132,7 @@ describe('auth service', () => {
     });
 
     it('throws error on invalid token', async () => {
-      fetch.mockResolvedValue({
+      (fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
         ok: false,
         json: () => Promise.resolve({ error: 'Invalid or expired reset token', code: 'INVALID_TOKEN' }),
       });

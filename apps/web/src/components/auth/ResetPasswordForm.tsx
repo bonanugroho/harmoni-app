@@ -1,9 +1,15 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, type FormEvent, type ChangeEvent } from 'react';
 import { useSearchParams, useNavigate, Link } from 'react-router-dom';
 import { requestPasswordReset, confirmPasswordReset } from '../../services/auth';
 
-function validatePassword(password) {
-  const errors = [];
+interface PasswordStrength {
+  level: string;
+  label: string;
+  color: string;
+}
+
+function validatePassword(password: string): string[] {
+  const errors: string[] = [];
   if (password.length < 8) {
     errors.push('Password must be at least 8 characters.');
   }
@@ -13,7 +19,7 @@ function validatePassword(password) {
   return errors;
 }
 
-function getPasswordStrength(password) {
+function getPasswordStrength(password: string): PasswordStrength {
   if (!password) return { level: '', label: '', color: '' };
 
   let score = 0;
@@ -39,9 +45,8 @@ export default function ResetPasswordForm() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-  const [fieldErrors, setFieldErrors] = useState({});
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
-  // If token is present in URL, show new password form
   const isNewPasswordMode = !!token;
 
   useEffect(() => {
@@ -51,7 +56,7 @@ export default function ResetPasswordForm() {
     }
   }, [token]);
 
-  function handleRequestReset(e) {
+  function handleRequestReset(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError('');
     setSuccess('');
@@ -75,7 +80,7 @@ export default function ResetPasswordForm() {
         setSuccess(`Check your email. We sent a reset link to ${email}. It expires in 1 hour.`);
         setEmail('');
       })
-      .catch((err) => {
+      .catch((err: Error) => {
         setError(err.message);
       })
       .finally(() => {
@@ -83,13 +88,13 @@ export default function ResetPasswordForm() {
       });
   }
 
-  function handleConfirmReset(e) {
+  function handleConfirmReset(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError('');
     setSuccess('');
     setFieldErrors({});
 
-    const errors = {};
+    const errors: Record<string, string> = {};
     const passwordErrors = validatePassword(newPassword);
     if (passwordErrors.length > 0) errors.newPassword = passwordErrors[0];
     if (newPassword !== confirmPassword) errors.confirmPassword = 'Passwords do not match.';
@@ -101,12 +106,12 @@ export default function ResetPasswordForm() {
 
     setLoading(true);
 
-    confirmPasswordReset(token, newPassword)
+    confirmPasswordReset(token as string, newPassword)
       .then(() => {
         setSuccess('Password updated. You can now sign in with your new password.');
         setTimeout(() => navigate('/login'), 2000);
       })
-      .catch((err) => {
+      .catch((err: Error) => {
         if (err.message.includes('Invalid') || err.message.includes('expired')) {
           setError('Invalid or expired reset token');
         } else {
@@ -120,7 +125,6 @@ export default function ResetPasswordForm() {
 
   const strength = getPasswordStrength(newPassword);
 
-  // New password mode (token present)
   if (isNewPasswordMode) {
     return (
       <form onSubmit={handleConfirmReset} className="space-y-5" noValidate>
@@ -143,7 +147,7 @@ export default function ResetPasswordForm() {
             id="newPassword"
             type="password"
             value={newPassword}
-            onChange={(e) => setNewPassword(e.target.value)}
+            onChange={(e: ChangeEvent<HTMLInputElement>) => setNewPassword(e.target.value)}
             className={`min-h-[44px] w-full rounded-md border px-3 py-2 text-base outline-none transition-colors ${
               fieldErrors.newPassword
                 ? 'border-red-600 focus:border-red-600'
@@ -176,7 +180,7 @@ export default function ResetPasswordForm() {
             id="confirmPassword"
             type="password"
             value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
+            onChange={(e: ChangeEvent<HTMLInputElement>) => setConfirmPassword(e.target.value)}
             className={`min-h-[44px] w-full rounded-md border px-3 py-2 text-base outline-none transition-colors ${
               fieldErrors.confirmPassword
                 ? 'border-red-600 focus:border-red-600'
@@ -210,7 +214,6 @@ export default function ResetPasswordForm() {
     );
   }
 
-  // Request reset mode (no token)
   return (
     <form onSubmit={handleRequestReset} className="space-y-5" noValidate>
       {error && (
@@ -234,7 +237,7 @@ export default function ResetPasswordForm() {
               id="email"
               type="email"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={(e: ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
               className={`min-h-[44px] w-full rounded-md border px-3 py-2 text-base outline-none transition-colors ${
                 fieldErrors.email
                   ? 'border-red-600 focus:border-red-600'
