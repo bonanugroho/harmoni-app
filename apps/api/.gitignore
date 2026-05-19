@@ -1,6 +1,9 @@
 # Compiled binary at project root
 /server
 
+# Build output directory
+/bin/
+
 # Build output
 *.exe
 *.exe~
