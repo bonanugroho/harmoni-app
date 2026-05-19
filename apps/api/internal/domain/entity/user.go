@@ -4,16 +4,16 @@ import "time"
 
 // User represents a registered user in the Harmoni system.
 type User struct {
-	ID           string
-	Email        string
-	PasswordHash string
-	Role         string
-	TerritoryID  string
-	FullName     string
-	Phone        string
-	IsActive     bool
-	CreatedAt    time.Time
-	UpdatedAt    time.Time
+	ID           string    `json:"id"`
+	Email        string    `json:"email"`
+	PasswordHash string    `json:"password_hash,omitempty"`
+	Role         string    `json:"role"`
+	TerritoryID  string    `json:"territory_id"`
+	FullName     string    `json:"full_name"`
+	Phone        string    `json:"phone"`
+	IsActive     bool      `json:"is_active"`
+	CreatedAt    time.Time `json:"created_at"`
+	UpdatedAt    time.Time `json:"updated_at"`
 }
 
 // Sanitize returns a copy of the user with the password hash removed.
