@@ -13,8 +13,5 @@
   },
   "ship": {
     "pr_body_sections": []
-  },
-  "graphify": {
-    "enabled": true
   }
 }
