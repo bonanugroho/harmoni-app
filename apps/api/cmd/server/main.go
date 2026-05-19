@@ -93,7 +93,9 @@ func main() {
 	authHandler.RegisterRoutes(app)
 
 	// Initialize Casbin enforcer
-	enforcer, err := infraauth.InitEnforcer("rbac_model.conf", "policy.csv")
+	modelPath := filepath.Join(wd, "rbac_model.conf")
+	policyPath := filepath.Join(wd, "policy.csv")
+	enforcer, err := infraauth.InitEnforcer(modelPath, policyPath)
 	if err != nil {
 		log.Fatalf("Failed to initialize Casbin enforcer: %v", err)
 	}

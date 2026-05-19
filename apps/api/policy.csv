@@ -5,7 +5,7 @@
 #   - Specific territory IDs (e.g., "rt-01", "rt-02") for RT officers
 #   - "*" wildcard for RW officers (access to all territories)
 #
-# Resources: tenant, income, expenditure, report
+# Resources: users, tenants, incomes, expenditures, reports
 # Actions: read, write
 #
 # Role hierarchy (defined separately):
@@ -14,32 +14,37 @@
 
 # ── Resident Policies ──
 # Residents can only read their own territory data
-p, resident, tenant, read, {{territory_id}}
-p, resident, income, read, {{territory_id}}
-p, resident, expenditure, read, {{territory_id}}
-p, resident, report, read, {{territory_id}}
+p, resident, users, read, *
+p, resident, tenants, read, *
+p, resident, incomes, read, *
+p, resident, expenditures, read, *
+p, resident, reports, read, *
 
 # ── RT Officer Policies ──
 # RT officers can read and write within their assigned territory
-p, rt_officer, tenant, read, {{territory_id}}
-p, rt_officer, tenant, write, {{territory_id}}
-p, rt_officer, income, read, {{territory_id}}
-p, rt_officer, income, write, {{territory_id}}
-p, rt_officer, expenditure, read, {{territory_id}}
-p, rt_officer, expenditure, write, {{territory_id}}
-p, rt_officer, report, read, {{territory_id}}
-p, rt_officer, report, write, {{territory_id}}
+p, rt_officer, users, read, *
+p, rt_officer, users, write, *
+p, rt_officer, tenants, read, *
+p, rt_officer, tenants, write, *
+p, rt_officer, incomes, read, *
+p, rt_officer, incomes, write, *
+p, rt_officer, expenditures, read, *
+p, rt_officer, expenditures, write, *
+p, rt_officer, reports, read, *
+p, rt_officer, reports, write, *
 
 # ── RW Officer Policies ──
 # RW officers can read and write across ALL territories (wildcard)
-p, rw_officer, tenant, read, *
-p, rw_officer, tenant, write, *
-p, rw_officer, income, read, *
-p, rw_officer, income, write, *
-p, rw_officer, expenditure, read, *
-p, rw_officer, expenditure, write, *
-p, rw_officer, report, read, *
-p, rw_officer, report, write, *
+p, rw_officer, users, read, *
+p, rw_officer, users, write, *
+p, rw_officer, tenants, read, *
+p, rw_officer, tenants, write, *
+p, rw_officer, incomes, read, *
+p, rw_officer, incomes, write, *
+p, rw_officer, expenditures, read, *
+p, rw_officer, expenditures, write, *
+p, rw_officer, reports, read, *
+p, rw_officer, reports, write, *
 
 # ── Role Hierarchy ──
 # RW officers inherit all RT officer permissions
