@@ -179,6 +179,11 @@ func (s *AuthService) ResetPassword(token, newPassword string) error {
 		return ErrResetTokenUsed
 	}
 
+	// Check if token has expired
+	if time.Now().After(record.ExpiresAt) {
+		return ErrInvalidResetToken
+	}
+
 	// Hash new password
 	newHash, err := auth.HashPassword(newPassword)
 	if err != nil {
