@@ -3,26 +3,51 @@ package config
 import (
 	"encoding/hex"
 	"fmt"
-	"os"
+	"strings"
+
+	"github.com/spf13/viper"
 )
 
 // Config holds the application configuration loaded from environment variables.
 type Config struct {
-	DatabaseURL     string
-	PasetoSecretKey string
-	EmailAPIKey     string
-	AppEnv          string
-	AppPort         string
+	DatabaseURL     string `mapstructure:"DATABASE_URL"`
+	PasetoSecretKey string `mapstructure:"PASETO_SECRET_KEY"`
+	EmailAPIKey     string `mapstructure:"EMAIL_API_KEY"`
+	AppEnv          string `mapstructure:"APP_ENV"`
+	AppPort         string `mapstructure:"APP_PORT"`
 }
 
 // LoadEnv loads and validates required environment variables.
+// Viper automatically loads .env file if present, then overrides with actual env vars.
 func LoadEnv() (*Config, error) {
-	cfg := &Config{
-		DatabaseURL:     os.Getenv("DATABASE_URL"),
-		PasetoSecretKey: os.Getenv("PASETO_SECRET_KEY"),
-		EmailAPIKey:     os.Getenv("EMAIL_API_KEY"),
-		AppEnv:          getEnvOrDefault("APP_ENV", "development"),
-		AppPort:         getEnvOrDefault("APP_PORT", "8080"),
+	v := viper.New()
+
+	// Set defaults
+	v.SetDefault("APP_ENV", "development")
+	v.SetDefault("APP_PORT", "8080")
+
+	// Configure Viper to read .env file
+	v.SetConfigName(".env")
+	v.SetConfigType("env")
+	v.AddConfigPath(".")
+	v.AddConfigPath("..")
+	v.AddConfigPath("./apps/api")
+
+	// Read .env file (ignore if not found — env vars will still work)
+	if err := v.ReadInConfig(); err != nil {
+		if _, ok := err.(viper.ConfigFileNotFoundError); !ok {
+			return nil, fmt.Errorf("failed to read config file: %w", err)
+		}
+	}
+
+	// Bind environment variables (these override .env values)
+	v.AutomaticEnv()
+	v.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
+
+	// Unmarshal into Config struct
+	var cfg Config
+	if err := v.Unmarshal(&cfg); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal config: %w", err)
 	}
 
 	// Validate required variables
@@ -43,7 +68,7 @@ func LoadEnv() (*Config, error) {
 		return nil, &EnvValidationError{Field: "PASETO_SECRET_KEY", Message: err.Error()}
 	}
 
-	return cfg, nil
+	return &cfg, nil
 }
 
 // validatePasetoKey ensures the PASETO secret key is a valid 32-byte hex-encoded string.
@@ -70,13 +95,6 @@ func GeneratePasetoKey() (string, error) {
 		key[i] = 0 // placeholder — use crypto/rand in production
 	}
 	return hex.EncodeToString(key), nil
-}
-
-func getEnvOrDefault(key, defaultValue string) string {
-	if v := os.Getenv(key); v != "" {
-		return v
-	}
-	return defaultValue
 }
 
 // EnvValidationError is returned when a required environment variable is missing or invalid.
