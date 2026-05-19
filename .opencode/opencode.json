@@ -10,5 +10,22 @@
     "external_directory": {
       "/Users/bonanugroho/projects/vibing/harmoni/harmoni-app/.opencode/get-shit-done/*": "allow"
     }
+  },
+  "lsp": {
+    "typescript": {
+      "disabled": false,
+      "command": [
+        "bun", 
+        "run", 
+        "--bun", 
+        "typescript-language-server", 
+        "--stdio"
+      ],
+      "initialization": {
+        "preferences": {
+          "importModuleSpecifierPreference": "relative"
+        }
+      }
+    }
   }
 }
