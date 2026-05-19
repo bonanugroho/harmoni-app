@@ -5,18 +5,20 @@ import (
 	"time"
 
 	"harmoni-api/internal/domain/service"
+	"harmoni-api/internal/infrastructure/auth"
 
 	"github.com/gofiber/fiber/v2"
 )
 
 // AuthHandler handles authentication HTTP endpoints.
 type AuthHandler struct {
-	authService *service.AuthService
+	authService  *service.AuthService
+	pasetoService *auth.PasetoService
 }
 
 // NewAuthHandler creates a new auth handler.
-func NewAuthHandler(authService *service.AuthService) *AuthHandler {
-	return &AuthHandler{authService: authService}
+func NewAuthHandler(authService *service.AuthService, pasetoService *auth.PasetoService) *AuthHandler {
+	return &AuthHandler{authService: authService, pasetoService: pasetoService}
 }
 
 // RegisterRoutes registers auth endpoints on the Fiber app.
@@ -26,6 +28,7 @@ func (h *AuthHandler) RegisterRoutes(app *fiber.App) {
 	api.Post("/login", h.Login)
 	api.Post("/reset", h.ResetPasswordRequest)
 	api.Post("/reset/confirm", h.ResetPasswordConfirm)
+	api.Get("/me", h.Me)
 }
 
 // RegisterRequest represents the registration request body.
@@ -217,6 +220,33 @@ func (h *AuthHandler) ResetPasswordConfirm(c *fiber.Ctx) error {
 
 	return c.JSON(fiber.Map{
 		"message": "Password updated successfully",
+	})
+}
+
+// Me handles GET /auth/me — returns the authenticated user from the PASETO cookie.
+func (h *AuthHandler) Me(c *fiber.Ctx) error {
+	token := c.Cookies("paseto_token")
+	if token == "" {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"error": "No authentication token",
+			"code":  "MISSING_TOKEN",
+		})
+	}
+
+	claims, err := h.pasetoService.ValidateToken(token)
+	if err != nil {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"error": "Invalid or expired token",
+			"code":  "INVALID_TOKEN",
+		})
+	}
+
+	return c.JSON(fiber.Map{
+		"user": fiber.Map{
+			"id":           claims.UserID,
+			"role":         claims.Role,
+			"territory_id": claims.TerritoryID,
+		},
 	})
 }
 

@@ -99,7 +99,7 @@ func main() {
 	})
 
 	// Register auth routes
-	authHandler := httphandler.NewAuthHandler(authService)
+	authHandler := httphandler.NewAuthHandler(authService, pasetoService)
 	authHandler.RegisterRoutes(app)
 
 	// Initialize Casbin enforcer
