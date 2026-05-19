@@ -15,6 +15,7 @@ import (
 	infrarepo "harmoni-api/internal/infrastructure/repository"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/cors"
 )
 
 func main() {
@@ -62,7 +63,7 @@ func main() {
 		"http://localhost:5173", // Frontend URL for reset links
 	)
 
-	// Initialize Fiber app
+	// Initialize Fiber app with CORS
 	app := fiber.New(fiber.Config{
 		ErrorHandler: func(c *fiber.Ctx, err error) error {
 			code := fiber.StatusInternalServerError
@@ -74,6 +75,15 @@ func main() {
 			})
 		},
 	})
+
+	// CORS middleware for frontend
+	app.Use(cors.New(cors.Config{
+		AllowOrigins:     "http://localhost:5173",
+		AllowMethods:     "GET,POST,PUT,PATCH,DELETE,OPTIONS",
+		AllowHeaders:     "Origin,Content-Type,Accept,Authorization",
+		AllowCredentials: true,
+		ExposeHeaders:    "Set-Cookie",
+	}))
 
 	// Health check endpoint with database status
 	app.Get("/health", func(c *fiber.Ctx) error {

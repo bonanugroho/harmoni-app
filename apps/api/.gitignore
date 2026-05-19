@@ -20,6 +20,9 @@
 # Environment files (keep .env.example)
 .env
 
+# Test cookies
+cookies.txt
+
 # IDE
 .idea/
 .vscode/
