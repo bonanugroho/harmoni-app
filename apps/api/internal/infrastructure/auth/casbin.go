@@ -15,6 +15,14 @@ var (
 	enforcerErr      error
 )
 
+// ResetEnforcerForTest resets the singleton state for testing purposes.
+// This should only be used in tests.
+func ResetEnforcerForTest() {
+	enforcerOnce = sync.Once{}
+	enforcerInstance = nil
+	enforcerErr = nil
+}
+
 // CasbinEnforcer wraps the Casbin enforcer with territory-aware enforcement.
 type CasbinEnforcer struct {
 	enforcer *casbin.Enforcer
