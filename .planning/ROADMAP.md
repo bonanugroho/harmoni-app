@@ -20,6 +20,11 @@ date: 2026-05-19
 2. Mandatory fees (e.g., waste, security) can be defined per tenant.
 3. Voluntary contributions can be added and reported.
 4. Data isolation ensures RT 01 officers cannot access RT 02 tenant data.
+**Plans:** 4 plans (Wave 1 → 4)
+- [ ] 02-01-PLAN.md — Database migrations & entity definitions (TEN-01, FIN-01, FIN-02)
+- [ ] 02-02-PLAN.md — Repository interfaces & pgx implementations (TEN-01, FIN-01, FIN-02)
+- [ ] 02-03-PLAN.md — Service layer with validation & policy updates (TEN-01, FIN-01, FIN-02)
+- [ ] 02-04-PLAN.md — HTTP handler, main.go wiring & stub removal (TEN-01, FIN-01, FIN-02)
 
 ## Phase 3: Transaction Engine & Expenditures
 **Goal:** Record income (fees, contributions, RT→RW transfers) and expenses (operational costs).

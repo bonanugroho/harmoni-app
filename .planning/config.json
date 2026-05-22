@@ -4,6 +4,9 @@
   "parallelization": false,
   "commit_docs": true,
   "model_profile": "inherit",
+  "graphify": { 
+    "enabled": true 
+  },
   "workflow": {
     "research": true,
     "plan_check": false,
