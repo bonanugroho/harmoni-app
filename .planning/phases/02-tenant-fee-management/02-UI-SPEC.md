@@ -84,9 +84,9 @@ Declared values (must be multiples of 4):
 | Heading | 24px | 600 (semibold) | 1.2 | Page titles ("Tenants", "Unit A-01 — Fees") |
 | Display | 28px | 600 (semibold) | 1.2 | App name in sidebar header ("Harmoni") |
 
-**Rationale:** Keeps the 2-weight (400, 600), 5-role system from Phase 1 with one addition — a `Label` role at 14px/600 for form field labels and fee type section headers. The Phase 1 body 16px continues as the primary readable size. Heading 24px is sufficient for phase pages (no need for Display outside sidebar brand).
+**Rationale:** Keeps the 2-weight (400, 600) system with exactly 4 sizes. Body 16px continues as the primary readable size. Small 14px covers labels, helper text, and badges (with weight distinguishing label from body). Heading 24px is sufficient for phase pages. Display 28px reserved for the sidebar brand.
 
-**Currency amounts:** 16px semibold (price emphasis within cards), 20px semibold for total/summary figures.
+**Currency amounts:** 16px semibold for price emphasis within cards, 24px semibold for total/summary figures.
 
 ---
 
@@ -262,6 +262,8 @@ Declared values (must be multiples of 4):
 │  └────────────────────────────────────┘      │
 └──────────────────────────────────────────────┘
 ```
+
+**Focal point:** The "+ Add Tenant" button (blue-600 fill, white text, 14px/600 semibold) sits in the page header, right-aligned opposite the "Tenants" heading. This is the primary action users take on this screen — it draws the eye as the only blue-600 accent element in the header zone.
 
 **Layout rules:**
 - Page header: "Tenants" heading left, "+ Add Tenant" button right
