@@ -8,6 +8,7 @@ import (
 
 	"harmoni-api/internal/config"
 	httphandler "harmoni-api/internal/delivery/http"
+	"harmoni-api/internal/delivery/middleware"
 	"harmoni-api/internal/domain/service"
 	infraauth "harmoni-api/internal/infrastructure/auth"
 	"harmoni-api/internal/infrastructure/database"
@@ -110,9 +111,32 @@ func main() {
 		log.Fatalf("Failed to initialize Casbin enforcer: %v", err)
 	}
 
-	// Register protected routes with auth → casbin middleware chain
+	// Create auth + casbin middleware instances
+	authMW := middleware.NewAuthMiddleware(middleware.AuthMiddlewareConfig{
+		PasetoService: pasetoService,
+		PublicRoutes:  middleware.DefaultPublicRoutes(),
+	})
+	casbinMW := middleware.NewCasbinMiddleware(middleware.CasbinMiddlewareConfig{
+		Enforcer: enforcer,
+	})
+
+	// Protected API group with middleware chain (shared by all protected handlers)
+	api := app.Group("/api", authMW, casbinMW)
+
+	// Register protected user/incomes/reports routes on /api group
 	protectedHandler := httphandler.NewProtectedHandler(enforcer)
-	protectedHandler.RegisterRoutes(app, pasetoService)
+	protectedHandler.RegisterRoutes(api, pasetoService)
+
+	// Initialize tenant/fee repositories
+	tenantRepo := infrarepo.NewPostgresTenantRepository(db.Pool)
+	feeRepo := infrarepo.NewPostgresFeeRepository(db.Pool)
+
+	// Initialize tenant service
+	tenantService := service.NewTenantService(tenantRepo, feeRepo, db.Pool)
+
+	// Register tenant/fee routes on same middleware-protected group
+	tenantHandler := httphandler.NewTenantHandler(tenantService)
+	tenantHandler.RegisterRoutes(api, pasetoService)
 
 	// Start server
 	port := cfg.AppPort

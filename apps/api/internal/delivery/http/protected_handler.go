@@ -1,7 +1,6 @@
 package http
 
 import (
-	"harmoni-api/internal/delivery/middleware"
 	"harmoni-api/internal/infrastructure/auth"
 
 	"github.com/gofiber/fiber/v2"
@@ -17,31 +16,13 @@ func NewProtectedHandler(enforcer *auth.CasbinEnforcer) *ProtectedHandler {
 	return &ProtectedHandler{enforcer: enforcer}
 }
 
-// RegisterRoutes registers protected routes with the Fiber app.
-// Routes are protected by the auth → casbin middleware chain.
-func (h *ProtectedHandler) RegisterRoutes(app *fiber.App, pasetoSvc *auth.PasetoService) {
-	// Create middleware instances
-	authMW := middleware.NewAuthMiddleware(middleware.AuthMiddlewareConfig{
-		PasetoService: pasetoSvc,
-		PublicRoutes:  middleware.DefaultPublicRoutes(),
-	})
-
-	casbinMW := middleware.NewCasbinMiddleware(middleware.CasbinMiddlewareConfig{
-		Enforcer: h.enforcer,
-	})
-
-	// Protected API group with middleware chain
-	api := app.Group("/api", authMW, casbinMW)
-
+// RegisterRoutes registers protected routes on the provided Fiber router.
+// The router is expected to already have auth and casbin middleware applied.
+func (h *ProtectedHandler) RegisterRoutes(api fiber.Router, pasetoSvc *auth.PasetoService) {
 	// User routes (territory-aware)
 	api.Get("/users", h.ListUsers)
 	api.Get("/users/:id", h.GetUser)
 	api.Post("/users", h.CreateUser)
-
-	// Tenant routes (singular to match Casbin policy resource names)
-	api.Get("/tenant", h.ListTenants)
-	api.Get("/tenant/:id", h.GetTenant)
-	api.Post("/tenant", h.CreateTenant)
 
 	// Income routes
 	api.Get("/income", h.ListIncomes)
@@ -107,47 +88,6 @@ func (h *ProtectedHandler) CreateUser(c *fiber.Ctx) error {
 		"id":        "new-user-id",
 		"territory": claims.TerritoryID,
 		"created_by": claims.UserID,
-	})
-}
-
-// ListTenants returns tenants in the user's territory.
-func (h *ProtectedHandler) ListTenants(c *fiber.Ctx) error {
-	claims := getUserClaims(c)
-	if claims == nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "user context not found",
-		})
-	}
-
-	return c.JSON(fiber.Map{
-		"tenants":     []string{},
-		"territory":   claims.TerritoryID,
-		"role":        claims.Role,
-		"filter_type": getFilterType(claims.Role),
-	})
-}
-
-// GetTenant returns tenant details.
-func (h *ProtectedHandler) GetTenant(c *fiber.Ctx) error {
-	tenantID := c.Params("id")
-	return c.JSON(fiber.Map{
-		"id":   tenantID,
-		"name": "Sample Tenant",
-	})
-}
-
-// CreateTenant creates a new tenant.
-func (h *ProtectedHandler) CreateTenant(c *fiber.Ctx) error {
-	claims := getUserClaims(c)
-	if claims == nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "user context not found",
-		})
-	}
-
-	return c.Status(fiber.StatusCreated).JSON(fiber.Map{
-		"id":        "new-tenant-id",
-		"territory": claims.TerritoryID,
 	})
 }
 
