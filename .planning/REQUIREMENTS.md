@@ -15,11 +15,11 @@ date: 2026-05-19
 - [ ] **AUTH-02**: Role‑Based Access Control (Resident, RT Officer, RW Officer) enforced via Casbin policies.
 
 ### Tenant Management
-- [ ] **TEN-01**: Record tenant information (house block, unit number, occupancy status, monthly fee).
+- [x] **TEN-01**: Record tenant information (house block, unit number, occupancy status, monthly fee).
 
 ### Income & Fee Management
-- [ ] **FIN-01**: Record mandatory fees (fixed monthly fees per unit).
-- [ ] **FIN-02**: Record voluntary contributions (e.g., holiday bonuses, social donations).
+- [x] **FIN-01**: Record mandatory fees (fixed monthly fees per unit).
+- [x] **FIN-02**: Record voluntary contributions (e.g., holiday bonuses, social donations).
 - [ ] **FIN-03**: Handle RT → RW cash transfers.
 
 ### Expenditure Tracking
@@ -51,9 +51,9 @@ date: 2026-05-19
 |-------------|-------|--------|
 | AUTH-01 | Phase 1 | Pending |
 | AUTH-02 | Phase 1 | Pending |
-| TEN-01 | Phase 2 | Pending |
-| FIN-01 | Phase 2 | Pending |
-| FIN-02 | Phase 2 | Pending |
+| TEN-01 | Phase 2 | Complete |
+| FIN-01 | Phase 2 | Complete |
+| FIN-02 | Phase 2 | Complete |
 | FIN-03 | Phase 3 | Pending |
 | EXP-01 | Phase 3 | Pending |
 | REP-01 | Phase 4 | Pending |

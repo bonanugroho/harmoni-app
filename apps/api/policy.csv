@@ -5,7 +5,7 @@
 #   - Specific territory IDs (e.g., "rt-01", "rt-02") for RT officers
 #   - "*" wildcard for RW officers (access to all territories)
 #
-# Resources: users, tenant, income, expenditure, report
+# Resources: users, tenant, fee, mandatory_fee, voluntary_fee, income, expenditure, report
 # Actions: read, write
 #
 # Role hierarchy (defined separately):
@@ -22,8 +22,6 @@ p, resident, report, read, *
 
 # ── RT Officer Policies ──
 # RT officers can read and write within their assigned territory
-p, rt_officer, users, read, *
-p, rt_officer, users, write, *
 p, rt_officer, tenant, read, *
 p, rt_officer, tenant, write, *
 p, rt_officer, income, read, *
@@ -35,8 +33,6 @@ p, rt_officer, report, write, *
 
 # ── RW Officer Policies ──
 # RW officers can read and write across ALL territories (wildcard)
-p, rw_officer, users, read, *
-p, rw_officer, users, write, *
 p, rw_officer, tenant, read, *
 p, rw_officer, tenant, write, *
 p, rw_officer, income, read, *
@@ -45,6 +41,23 @@ p, rw_officer, expenditure, read, *
 p, rw_officer, expenditure, write, *
 p, rw_officer, report, read, *
 p, rw_officer, report, write, *
+
+# ── Fee Resources (Phase 2) ──
+# Residents can read fees for their own tenants (scoped by service layer)
+p, resident, mandatory_fee, read, *
+p, resident, voluntary_fee, read, *
+
+# RT officers manage fees within their territory
+p, rt_officer, mandatory_fee, read, *
+p, rt_officer, mandatory_fee, write, *
+p, rt_officer, voluntary_fee, read, *
+p, rt_officer, voluntary_fee, write, *
+
+# RW officers manage fees across all territories
+p, rw_officer, mandatory_fee, read, *
+p, rw_officer, mandatory_fee, write, *
+p, rw_officer, voluntary_fee, read, *
+p, rw_officer, voluntary_fee, write, *
 
 # ── Role Hierarchy ──
 # RW officers inherit all RT officer permissions

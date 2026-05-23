@@ -54,10 +54,18 @@ func NewAuthService(
 }
 
 // Register creates a new user account.
-func (s *AuthService) Register(email, password, fullName, territoryID string) (*entity.User, error) {
+func (s *AuthService) Register(email, password, fullName, role, territoryID string) (*entity.User, error) {
 	// Validate password complexity
 	if err := auth.ValidatePassword(password); err != nil {
 		return nil, fmt.Errorf("password validation failed: %w", err)
+	}
+
+	// Validate role
+	validRoles := map[string]bool{"resident": true, "rt_officer": true, "rw_officer": true}
+	if role == "" {
+		role = "resident"
+	} else if !validRoles[role] {
+		return nil, fmt.Errorf("invalid role: %q, must be one of: resident, rt_officer, rw_officer", role)
 	}
 
 	// Check if email already exists
@@ -77,7 +85,7 @@ func (s *AuthService) Register(email, password, fullName, territoryID string) (*
 	user := &entity.User{
 		Email:        email,
 		PasswordHash: hash,
-		Role:         "resident", // Default role
+		Role:         role,
 		TerritoryID:  territoryID,
 		FullName:     fullName,
 		IsActive:     true,

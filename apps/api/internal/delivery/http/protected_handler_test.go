@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"harmoni-api/internal/delivery/middleware"
 	"harmoni-api/internal/infrastructure/auth"
 
 	"github.com/gofiber/fiber/v2"
@@ -18,8 +19,23 @@ func setupProtectedApp(t *testing.T, pasetoSvc *auth.PasetoService, enforcer *au
 	t.Helper()
 
 	app := fiber.New()
+
+	// Create middleware instances (same as main.go)
+	authMW := middleware.NewAuthMiddleware(middleware.AuthMiddlewareConfig{
+		PasetoService: pasetoSvc,
+		PublicRoutes:  middleware.DefaultPublicRoutes(),
+	})
+
+	casbinMW := middleware.NewCasbinMiddleware(middleware.CasbinMiddlewareConfig{
+		Enforcer: enforcer,
+	})
+
+	// Protected API group with middleware chain
+	api := app.Group("/api", authMW, casbinMW)
+
+	// Register protected routes
 	handler := NewProtectedHandler(enforcer)
-	handler.RegisterRoutes(app, pasetoSvc)
+	handler.RegisterRoutes(api, pasetoSvc)
 
 	// Add health endpoint (public)
 	app.Get("/health", func(c *fiber.Ctx) error {
@@ -93,7 +109,7 @@ func TestProtectedRoutes_RWOfficerAllTerritories(t *testing.T) {
 	assert.NoError(t, err)
 
 	// RW officer can access all resources
-	resources := []string{"/api/tenant", "/api/income", "/api/expenditure", "/api/report"}
+	resources := []string{"/api/users", "/api/income", "/api/expenditure", "/api/report"}
 	for _, resource := range resources {
 		resp, err := doProtectedRequest(app, "GET", resource, token)
 		assert.NoError(t, err)
@@ -115,7 +131,7 @@ func TestProtectedRoutes_RTOfficerOwnTerritory(t *testing.T) {
 	// RT officer can read resources (policy has {{territory_id}} placeholder)
 	// The middleware passes the raw territory_id, so this may be denied
 	// unless the enforcer handles placeholder substitution
-	resp, err := doProtectedRequest(app, "GET", "/api/tenant", token)
+	resp, err := doProtectedRequest(app, "GET", "/api/users", token)
 	assert.NoError(t, err)
 	// Either 200 or 403 depending on placeholder handling
 	assert.True(t, resp.StatusCode == fiber.StatusOK || resp.StatusCode == fiber.StatusForbidden,
@@ -134,13 +150,13 @@ func TestProtectedRoutes_ResidentReadOnly(t *testing.T) {
 	assert.NoError(t, err)
 
 	// Resident can read (if territory matches)
-	resp, err := doProtectedRequest(app, "GET", "/api/tenant", token)
+	resp, err := doProtectedRequest(app, "GET", "/api/users", token)
 	assert.NoError(t, err)
 	assert.True(t, resp.StatusCode == fiber.StatusOK || resp.StatusCode == fiber.StatusForbidden,
 		"expected 200 or 403, got %d", resp.StatusCode)
 
 	// Resident cannot write
-	resp, err = doProtectedRequest(app, "POST", "/api/tenant", token)
+	resp, err = doProtectedRequest(app, "POST", "/api/users", token)
 	assert.NoError(t, err)
 	assert.Equal(t, fiber.StatusForbidden, resp.StatusCode, "resident should not be able to create tenants")
 }
@@ -153,7 +169,7 @@ func TestProtectedRoutes_Unauthenticated(t *testing.T) {
 	app := setupProtectedApp(t, svc, ce)
 
 	// Access protected route without token
-	resp, err := doProtectedRequest(app, "GET", "/api/tenant", "")
+	resp, err := doProtectedRequest(app, "GET", "/api/users", "")
 	assert.NoError(t, err)
 	assert.Equal(t, fiber.StatusUnauthorized, resp.StatusCode)
 
@@ -189,7 +205,7 @@ func TestProtectedRoutes_ListUsersReturnsTerritory(t *testing.T) {
 	assert.NoError(t, err)
 
 	// Use tenant resource which is in the policy
-	resp, err := doProtectedRequest(app, "GET", "/api/tenant", token)
+	resp, err := doProtectedRequest(app, "GET", "/api/users", token)
 	assert.NoError(t, err)
 	assert.Equal(t, fiber.StatusOK, resp.StatusCode)
 
@@ -209,7 +225,7 @@ func TestProtectedRoutes_GetUser(t *testing.T) {
 	assert.NoError(t, err)
 
 	// Use tenant resource which is in the policy
-	resp, err := doProtectedRequest(app, "GET", "/api/tenant/123", token)
+	resp, err := doProtectedRequest(app, "GET", "/api/users/123", token)
 	assert.NoError(t, err)
 	assert.Equal(t, fiber.StatusOK, resp.StatusCode)
 
@@ -225,7 +241,7 @@ func TestProtectedRoutes_ErrorFormat(t *testing.T) {
 	app := setupProtectedApp(t, svc, ce)
 
 	// Invalid token
-	resp, err := doProtectedRequest(app, "GET", "/api/tenant", "invalid-token")
+	resp, err := doProtectedRequest(app, "GET", "/api/users", "invalid-token")
 	assert.NoError(t, err)
 	assert.Equal(t, fiber.StatusUnauthorized, resp.StatusCode)
 
