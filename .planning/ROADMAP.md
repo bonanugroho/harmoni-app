@@ -32,7 +32,19 @@ date: 2026-05-19
 - [x] 02-03-PLAN.md — Service layer with validation & policy updates (TEN-01, FIN-01, FIN-02)
 - [x] 02-04-PLAN.md — HTTP handler, main.go wiring & stub removal (TEN-01, FIN-01, FIN-02)
 
-## Phase 3: Transaction Engine & Expenditures
+## Phase 3: Tenant & Fee UI
+
+**Goal:** Build the tenant and fee management frontend based on the 02-UI-SPEC.md design contract — responsive, mobile-first UI for RT/RW officers and residents.
+**Success Criteria:**
+
+1. Tenant list page with card layout, search/filter, and responsive grid (1→2→3 columns).
+2. Create/edit tenant form with dynamic mandatory fee section.
+3. Tenant detail page with fee management (mandatory + voluntary sections).
+4. AppLayout with responsive sidebar (collapsible on mobile, fixed on desktop).
+5. All pages work on low-end mobile browsers with 44px touch targets.
+6. Unit tests cover all new components and pages.
+
+## Phase 4: Transaction Engine & Expenditures
 
 **Goal:** Record income (fees, contributions, RT→RW transfers) and expenses (operational costs).
 **Success Criteria:**
@@ -42,7 +54,7 @@ date: 2026-05-19
 3. RT → RW transfers update balances correctly and are reflected in reports.
 4. End‑to‑end testing validates financial calculations.
 
-## Phase 4: Dashboards & Reporting
+## Phase 5: Dashboards & Reporting
 
 **Goal:** Deliver real‑time financial dashboards and accounts‑receivable analysis.
 **Success Criteria:**
@@ -54,4 +66,4 @@ date: 2026-05-19
 
 ---
 
-*Last updated: 2026‑05‑19*
+*Last updated: 2026‑05‑23*
