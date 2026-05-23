@@ -51,7 +51,7 @@ See: `.planning/PROJECT.md` (updated 2026-05-19)
 
 *Last updated: 2026-05-23*
 
-## Phase 3 Context
+## Phase 3 Context & UI-SPEC
 
 Context gathered on 2026-05-23. Decisions documented in `.planning/phases/03-tenant-fee-ui/03-CONTEXT.md`.
 
@@ -60,6 +60,8 @@ Key decisions:
 - **D-05 to D-09:** Use TanStack Query for data fetching
 - **D-10 to D-14:** Reusable Input/Select/DatePicker in `components/ui/`
 - **D-15 to D-17:** Mock TanStack Query hooks in tests
+
+UI design contract approved on 2026-05-23. See `.planning/phases/03-tenant-fee-ui/03-UI-SPEC.md` — 6/6 dimensions passed.
 
 ## Completed Plans
 
