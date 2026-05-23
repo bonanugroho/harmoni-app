@@ -99,6 +99,41 @@ func defaultResourceExtractor(c *fiber.Ctx) string {
 	return path
 }
 
+// TenantResourceExtractor extracts the resource name from tenant/fee URLs.
+// For /api/tenants/:id/fees, returns "tenant" as the resource (singular, matching policy convention).
+// For /api/fees/:feeId, returns "fee" as the resource.
+func TenantResourceExtractor(c *fiber.Ctx) string {
+	path := c.Path()
+	// Remove leading slash
+	if len(path) > 0 && path[0] == '/' {
+		path = path[1:]
+	}
+	// Remove /api/ prefix
+	if len(path) >= 4 && path[:4] == "api/" {
+		path = path[4:]
+	}
+	// Get first segment
+	var firstSeg string
+	for i, ch := range path {
+		if ch == '/' {
+			firstSeg = path[:i]
+			break
+		}
+	}
+	if firstSeg == "" {
+		firstSeg = path
+	}
+	// Normalize: "tenants" → "tenant", "fees" → "fee"
+	switch firstSeg {
+	case "tenants":
+		return "tenant"
+	case "fees":
+		return "fee"
+	default:
+		return firstSeg
+	}
+}
+
 // methodToAction maps HTTP methods to Casbin actions.
 func methodToAction(method string) string {
 	switch method {

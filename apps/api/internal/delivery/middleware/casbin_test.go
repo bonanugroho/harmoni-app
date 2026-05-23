@@ -32,14 +32,14 @@ func setupAuthAndCasbinApp(t *testing.T, pasetoSvc *auth.PasetoService, enforcer
 	})
 	app.Use(casbinMW)
 
-	// Protected routes
-	app.Get("/api/tenant", func(c *fiber.Ctx) error {
+	// Protected routes (plural per D-03 API design)
+	app.Get("/api/tenants", func(c *fiber.Ctx) error {
 		return c.JSON(fiber.Map{"tenants": []string{"tenant1", "tenant2"}})
 	})
-	app.Get("/api/tenant/:id", func(c *fiber.Ctx) error {
+	app.Get("/api/tenants/:id", func(c *fiber.Ctx) error {
 		return c.JSON(fiber.Map{"id": c.Params("id"), "name": "Test Tenant"})
 	})
-	app.Post("/api/tenant", func(c *fiber.Ctx) error {
+	app.Post("/api/tenants", func(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusCreated).JSON(fiber.Map{"id": "new-tenant"})
 	})
 	app.Get("/api/income", func(c *fiber.Ctx) error {
@@ -107,7 +107,7 @@ func TestCasbinMiddleware_RTOfficerOwnTerritory(t *testing.T) {
 	assert.NoError(t, err)
 
 	// RT officer accessing own territory should succeed
-	resp, err := doAuthRequest(app, "GET", "/api/tenant", token)
+	resp, err := doAuthRequest(app, "GET", "/api/tenants", token)
 	assert.NoError(t, err)
 	// Note: The enforcer uses {{territory_id}} placeholder, so we need to check
 	// if the middleware handles the substitution correctly
@@ -135,7 +135,7 @@ func TestCasbinMiddleware_RTOfficerOtherTerritory(t *testing.T) {
 
 	// The middleware passes "rt-01" as domain, but policy has {{territory_id}}
 	// So this will be denied (which is correct behavior for cross-territory)
-	resp, err := doAuthRequest(app, "GET", "/api/tenant", token)
+	resp, err := doAuthRequest(app, "GET", "/api/tenants", token)
 	assert.NoError(t, err)
 	// Either 200 (if placeholder matches) or 403 (if it doesn't)
 	assert.True(t, resp.StatusCode == fiber.StatusOK || resp.StatusCode == fiber.StatusForbidden,
@@ -158,7 +158,7 @@ func TestCasbinMiddleware_RWOfficerAllTerritories(t *testing.T) {
 	assert.NoError(t, err)
 
 	// RW officer should have access to tenant resource (uses * domain)
-	resp, err := doAuthRequest(app, "GET", "/api/tenant", token)
+	resp, err := doAuthRequest(app, "GET", "/api/tenants", token)
 	assert.NoError(t, err)
 	assert.Equal(t, fiber.StatusOK, resp.StatusCode)
 
@@ -184,13 +184,13 @@ func TestCasbinMiddleware_ResidentReadOnly(t *testing.T) {
 	assert.NoError(t, err)
 
 	// Resident reading should succeed (if territory matches)
-	resp, err := doAuthRequest(app, "GET", "/api/tenant", token)
+	resp, err := doAuthRequest(app, "GET", "/api/tenants", token)
 	assert.NoError(t, err)
 	assert.True(t, resp.StatusCode == fiber.StatusOK || resp.StatusCode == fiber.StatusForbidden,
 		"expected 200 or 403, got %d", resp.StatusCode)
 
 	// Resident writing should be denied
-	resp, err = doAuthRequest(app, "POST", "/api/tenant", token)
+	resp, err = doAuthRequest(app, "POST", "/api/tenants", token)
 	assert.NoError(t, err)
 	// Resident has no write policy, should be 403
 	assert.Equal(t, fiber.StatusForbidden, resp.StatusCode)
