@@ -136,7 +136,7 @@ func setupTestHandler(t *testing.T) (*fiber.App, *mockEmail) {
 	authSvc := service.NewAuthService(userRepo, resetRepo, paseto, emailSvc, "https://harmonictest.app")
 
 	app := fiber.New()
-	handler := NewAuthHandler(authSvc)
+	handler := NewAuthHandler(authSvc, paseto)
 	handler.RegisterRoutes(app)
 
 	return app, emailSvc
