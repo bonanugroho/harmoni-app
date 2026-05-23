@@ -117,7 +117,8 @@ func main() {
 		PublicRoutes:  middleware.DefaultPublicRoutes(),
 	})
 	casbinMW := middleware.NewCasbinMiddleware(middleware.CasbinMiddlewareConfig{
-		Enforcer: enforcer,
+		Enforcer:          enforcer,
+		ResourceExtractor: middleware.TenantResourceExtractor,
 	})
 
 	// Protected API group with middleware chain (shared by all protected handlers)

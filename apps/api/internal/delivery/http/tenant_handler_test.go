@@ -158,6 +158,17 @@ func (m *mockFeeRepo) ListMandatoryByTenant(ctx context.Context, tenantID string
 	return result, nil
 }
 
+func (m *mockFeeRepo) GetMandatoryByID(ctx context.Context, id string) (*entity.MandatoryFee, error) {
+	if m.findErr != nil {
+		return nil, m.findErr
+	}
+	fee, ok := m.mandatoryFees[id]
+	if !ok {
+		return nil, nil
+	}
+	return fee, nil
+}
+
 func (m *mockFeeRepo) UpdateMandatory(ctx context.Context, fee *entity.MandatoryFee) (*entity.MandatoryFee, error) {
 	if m.updateErr != nil {
 		return nil, m.updateErr
@@ -204,6 +215,17 @@ func (m *mockFeeRepo) ListVoluntaryByTenant(ctx context.Context, tenantID string
 		}
 	}
 	return result, nil
+}
+
+func (m *mockFeeRepo) GetVoluntaryByID(ctx context.Context, id string) (*entity.VoluntaryFee, error) {
+	if m.findErr != nil {
+		return nil, m.findErr
+	}
+	fee, ok := m.voluntaryFees[id]
+	if !ok {
+		return nil, nil
+	}
+	return fee, nil
 }
 
 func (m *mockFeeRepo) UpdateVoluntary(ctx context.Context, fee *entity.VoluntaryFee) (*entity.VoluntaryFee, error) {

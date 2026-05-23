@@ -89,8 +89,8 @@ func (h *TenantHandler) RegisterRoutes(api fiber.Router, pasetoSvc *auth.PasetoS
 	// Fee sub-resources (nested under tenant)
 	api.Get("/tenants/:id/fees", h.ListFees)
 	api.Post("/tenants/:id/fees", h.CreateFee)
-	api.Put("/fees/:feeId", h.UpdateFee)
-	api.Delete("/fees/:feeId", h.DeleteFee)
+	api.Put("/tenants/:id/fees/:feeId", h.UpdateFee)
+	api.Delete("/tenants/:id/fees/:feeId", h.DeleteFee)
 }
 
 // --- Handler Methods ---
@@ -159,6 +159,11 @@ func (h *TenantHandler) CreateTenant(c *fiber.Ctx) error {
 				"error": "Block and unit number already exist in this territory",
 				"code":  "DUPLICATE_BLOCK_UNIT",
 			})
+		case errors.Is(err, service.ErrCrossTerritoryAccess):
+			return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
+				"error": "Cross-territory access denied",
+				"code":  "CROSS_TERRITORY_DENIED",
+			})
 		case errors.Is(err, service.ErrMandatoryFeeRequired):
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 				"error": "At least one mandatory fee is required",
@@ -193,6 +198,12 @@ func (h *TenantHandler) GetTenant(c *fiber.Ctx) error {
 
 	tenant, err := h.tenantService.GetByID(c.Context(), id, claims)
 	if err != nil {
+		if errors.Is(err, service.ErrCrossTerritoryAccess) {
+			return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
+				"error": "Cross-territory access denied",
+				"code":  "CROSS_TERRITORY_DENIED",
+			})
+		}
 		if errors.Is(err, service.ErrTenantNotFound) {
 			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
 				"error": "Tenant not found",
@@ -239,6 +250,12 @@ func (h *TenantHandler) UpdateTenant(c *fiber.Ctx) error {
 
 	tenant, err := h.tenantService.Update(c.Context(), id, serviceReq, claims)
 	if err != nil {
+		if errors.Is(err, service.ErrCrossTerritoryAccess) {
+			return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
+				"error": "Cross-territory access denied",
+				"code":  "CROSS_TERRITORY_DENIED",
+			})
+		}
 		if errors.Is(err, service.ErrTenantNotFound) {
 			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
 				"error": "Tenant not found",
@@ -267,6 +284,12 @@ func (h *TenantHandler) DeleteTenant(c *fiber.Ctx) error {
 
 	err := h.tenantService.Delete(c.Context(), id, claims)
 	if err != nil {
+		if errors.Is(err, service.ErrCrossTerritoryAccess) {
+			return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
+				"error": "Cross-territory access denied",
+				"code":  "CROSS_TERRITORY_DENIED",
+			})
+		}
 		if errors.Is(err, service.ErrTenantNotFound) {
 			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
 				"error": "Tenant not found",
@@ -295,6 +318,12 @@ func (h *TenantHandler) ListFees(c *fiber.Ctx) error {
 
 	mandatory, voluntary, err := h.tenantService.ListFees(c.Context(), tenantID, claims)
 	if err != nil {
+		if errors.Is(err, service.ErrCrossTerritoryAccess) {
+			return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
+				"error": "Cross-territory access denied",
+				"code":  "CROSS_TERRITORY_DENIED",
+			})
+		}
 		if errors.Is(err, service.ErrTenantNotFound) {
 			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
 				"error": "Tenant not found",
@@ -341,13 +370,25 @@ func (h *TenantHandler) CreateFee(c *fiber.Ctx) error {
 	}
 
 	if req.Type == "mandatory" {
+		var paidAt *time.Time
+		if req.PaidAt != nil {
+			t := parseDate(*req.PaidAt)
+			paidAt = &t
+		}
 		feeReq := &service.CreateMandatoryFeeRequest{
 			Amount:        decimal.NewFromFloat(req.Amount),
 			Description:   req.Description,
 			EffectiveDate: parseDate(req.EffectiveDate),
+			PaidAt:        paidAt,
 		}
 		fee, err := h.tenantService.CreateMandatoryFee(c.Context(), tenantID, feeReq, claims)
 		if err != nil {
+			if errors.Is(err, service.ErrCrossTerritoryAccess) {
+				return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
+					"error": "Cross-territory access denied",
+					"code":  "CROSS_TERRITORY_DENIED",
+				})
+			}
 			if errors.Is(err, service.ErrTenantNotFound) {
 				return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
 					"error": "Tenant not found",
@@ -382,6 +423,12 @@ func (h *TenantHandler) CreateFee(c *fiber.Ctx) error {
 	}
 	fee, err := h.tenantService.CreateVoluntaryFee(c.Context(), tenantID, feeReq, claims)
 	if err != nil {
+		if errors.Is(err, service.ErrCrossTerritoryAccess) {
+			return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
+				"error": "Cross-territory access denied",
+				"code":  "CROSS_TERRITORY_DENIED",
+			})
+		}
 		if errors.Is(err, service.ErrTenantNotFound) {
 			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
 				"error": "Tenant not found",
@@ -402,8 +449,9 @@ func (h *TenantHandler) CreateFee(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusCreated).JSON(fee)
 }
 
-// UpdateFee handles PUT /api/fees/:feeId.
+// UpdateFee handles PUT /api/tenants/:id/fees/:feeId.
 func (h *TenantHandler) UpdateFee(c *fiber.Ctx) error {
+	tenantID := c.Params("id")
 	feeID := c.Params("feeId")
 
 	var req UpdateFeeRequest
@@ -432,8 +480,20 @@ func (h *TenantHandler) UpdateFee(c *fiber.Ctx) error {
 		serviceReq.PaidAt = &t
 	}
 
-	err := h.tenantService.UpdateFee(c.Context(), feeID, serviceReq, claims)
+	err := h.tenantService.UpdateFee(c.Context(), tenantID, feeID, serviceReq, claims)
 	if err != nil {
+		if errors.Is(err, service.ErrCrossTerritoryAccess) {
+			return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
+				"error": "Cross-territory access denied",
+				"code":  "CROSS_TERRITORY_DENIED",
+			})
+		}
+		if errors.Is(err, service.ErrTenantNotFound) {
+			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+				"error": "Tenant not found",
+				"code":  "TENANT_NOT_FOUND",
+			})
+		}
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": err.Error(),
 			"code":  "UPDATE_FEE_FAILED",
@@ -445,8 +505,9 @@ func (h *TenantHandler) UpdateFee(c *fiber.Ctx) error {
 	})
 }
 
-// DeleteFee handles DELETE /api/fees/:feeId.
+// DeleteFee handles DELETE /api/tenants/:id/fees/:feeId.
 func (h *TenantHandler) DeleteFee(c *fiber.Ctx) error {
+	tenantID := c.Params("id")
 	feeID := c.Params("feeId")
 	claims := getUserClaims(c)
 	if claims == nil {
@@ -456,8 +517,20 @@ func (h *TenantHandler) DeleteFee(c *fiber.Ctx) error {
 		})
 	}
 
-	err := h.tenantService.DeleteFee(c.Context(), feeID, claims)
+	err := h.tenantService.DeleteFee(c.Context(), tenantID, feeID, claims)
 	if err != nil {
+		if errors.Is(err, service.ErrCrossTerritoryAccess) {
+			return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
+				"error": "Cross-territory access denied",
+				"code":  "CROSS_TERRITORY_DENIED",
+			})
+		}
+		if errors.Is(err, service.ErrTenantNotFound) {
+			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+				"error": "Tenant not found",
+				"code":  "TENANT_NOT_FOUND",
+			})
+		}
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": err.Error(),
 			"code":  "DELETE_FEE_FAILED",

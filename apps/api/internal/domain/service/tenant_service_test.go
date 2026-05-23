@@ -155,6 +155,14 @@ func (m *mockFeeRepository) ListMandatoryByTenant(ctx context.Context, tenantID 
 	return result, nil
 }
 
+func (m *mockFeeRepository) GetMandatoryByID(ctx context.Context, id string) (*entity.MandatoryFee, error) {
+	fee, ok := m.mandatoryFees[id]
+	if !ok {
+		return nil, sql.ErrNoRows
+	}
+	return fee, nil
+}
+
 func (m *mockFeeRepository) UpdateMandatory(ctx context.Context, fee *entity.MandatoryFee) (*entity.MandatoryFee, error) {
 	if m.updateErr != nil {
 		return nil, m.updateErr
@@ -201,6 +209,14 @@ func (m *mockFeeRepository) ListVoluntaryByTenant(ctx context.Context, tenantID 
 		}
 	}
 	return result, nil
+}
+
+func (m *mockFeeRepository) GetVoluntaryByID(ctx context.Context, id string) (*entity.VoluntaryFee, error) {
+	fee, ok := m.voluntaryFees[id]
+	if !ok {
+		return nil, sql.ErrNoRows
+	}
+	return fee, nil
 }
 
 func (m *mockFeeRepository) UpdateVoluntary(ctx context.Context, fee *entity.VoluntaryFee) (*entity.VoluntaryFee, error) {
@@ -470,8 +486,8 @@ func TestTenantService_Delete_NotOwnTerritory(t *testing.T) {
 	}
 
 	err := svc.Delete(ctx, "tenant-rt01", rt02Claims)
-	if !errors.Is(err, ErrTenantNotFound) {
-		t.Errorf("Delete() error = %v, want ErrTenantNotFound", err)
+	if !errors.Is(err, ErrCrossTerritoryAccess) {
+		t.Errorf("Delete() error = %v, want ErrCrossTerritoryAccess", err)
 	}
 }
 

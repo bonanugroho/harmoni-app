@@ -108,6 +108,22 @@ func (r *PostgresFeeRepository) ListMandatoryByTenant(ctx context.Context, tenan
 	return fees, nil
 }
 
+// GetMandatoryByID returns a single mandatory fee by its ID.
+func (r *PostgresFeeRepository) GetMandatoryByID(ctx context.Context, id string) (*entity.MandatoryFee, error) {
+	query := `
+		SELECT id, tenant_id, amount, description, effective_date, paid_at, created_at, updated_at
+		FROM mandatory_fees
+		WHERE id = $1
+	`
+
+	updated, err := scanMandatoryFee(r.pool.QueryRow(ctx, query, id))
+	if err != nil {
+		return nil, fmt.Errorf("failed to get mandatory fee: %w", err)
+	}
+
+	return updated, nil
+}
+
 // UpdateMandatory updates an existing mandatory fee record.
 // Returns sql.ErrNoRows when no fee is found.
 func (r *PostgresFeeRepository) UpdateMandatory(ctx context.Context, fee *entity.MandatoryFee) (*entity.MandatoryFee, error) {
@@ -205,6 +221,22 @@ func (r *PostgresFeeRepository) ListVoluntaryByTenant(ctx context.Context, tenan
 	}
 
 	return fees, nil
+}
+
+// GetVoluntaryByID returns a single voluntary fee by its ID.
+func (r *PostgresFeeRepository) GetVoluntaryByID(ctx context.Context, id string) (*entity.VoluntaryFee, error) {
+	query := `
+		SELECT id, tenant_id, amount, description, effective_date, paid_at, created_at, updated_at
+		FROM voluntary_fees
+		WHERE id = $1
+	`
+
+	updated, err := scanVoluntaryFee(r.pool.QueryRow(ctx, query, id))
+	if err != nil {
+		return nil, fmt.Errorf("failed to get voluntary fee: %w", err)
+	}
+
+	return updated, nil
 }
 
 // UpdateVoluntary updates an existing voluntary contribution record.

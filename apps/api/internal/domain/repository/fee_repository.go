@@ -23,6 +23,10 @@ type FeeRepository interface {
 	// ListMandatoryByTenant returns all mandatory fees for a given tenant.
 	ListMandatoryByTenant(ctx context.Context, tenantID string) ([]*entity.MandatoryFee, error)
 
+	// GetMandatoryByID returns a single mandatory fee by its ID.
+	// Returns sql.ErrNoRows when no fee is found.
+	GetMandatoryByID(ctx context.Context, id string) (*entity.MandatoryFee, error)
+
 	// UpdateMandatory updates an existing mandatory fee record.
 	// Returns sql.ErrNoRows when no fee is found.
 	UpdateMandatory(ctx context.Context, fee *entity.MandatoryFee) (*entity.MandatoryFee, error)
@@ -38,6 +42,10 @@ type FeeRepository interface {
 
 	// ListVoluntaryByTenant returns all voluntary contributions for a given tenant.
 	ListVoluntaryByTenant(ctx context.Context, tenantID string) ([]*entity.VoluntaryFee, error)
+
+	// GetVoluntaryByID returns a single voluntary fee by its ID.
+	// Returns sql.ErrNoRows when no fee is found.
+	GetVoluntaryByID(ctx context.Context, id string) (*entity.VoluntaryFee, error)
 
 	// UpdateVoluntary updates an existing voluntary contribution record.
 	// Returns sql.ErrNoRows when no fee is found.

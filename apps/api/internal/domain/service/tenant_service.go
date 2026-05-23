@@ -11,6 +11,7 @@ import (
 	"harmoni-api/internal/infrastructure/auth"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/shopspring/decimal"
 )
 
@@ -69,6 +70,7 @@ type CreateMandatoryFeeRequest struct {
 	Amount        decimal.Decimal `json:"amount"`
 	Description   string          `json:"description"`
 	EffectiveDate time.Time       `json:"effective_date"`
+	PaidAt        *time.Time      `json:"paid_at"`
 }
 
 // CreateVoluntaryFeeRequest represents a voluntary fee creation request.
@@ -126,7 +128,12 @@ func (s *TenantService) Create(ctx context.Context, req *CreateTenantRequest, cl
 
 	// Determine territory scope
 	territoryID := claims.TerritoryID
-	if claims.Role == "rw_officer" && req.TerritoryID != "" {
+	if req.TerritoryID != "" && req.TerritoryID != claims.TerritoryID {
+		if claims.Role != "rw_officer" {
+			return nil, ErrCrossTerritoryAccess
+		}
+		territoryID = req.TerritoryID
+	} else if claims.Role == "rw_officer" && req.TerritoryID != "" {
 		territoryID = req.TerritoryID
 	}
 
@@ -141,6 +148,10 @@ func (s *TenantService) Create(ctx context.Context, req *CreateTenantRequest, cl
 
 	created, err := s.tenantRepo.CreateTx(ctx, tx, tenant)
 	if err != nil {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) && pgErr.Code == "23505" {
+			return nil, ErrDuplicateBlockUnit
+		}
 		return nil, fmt.Errorf("failed to create tenant: %w", err)
 	}
 
@@ -247,7 +258,7 @@ func (s *TenantService) CreateMandatoryFee(ctx context.Context, tenantID string,
 	}
 
 	// Validate fee constraints
-	if err := s.validateFee(req.Amount, tenant.MonthlyFee, req.EffectiveDate, nil); err != nil {
+	if err := s.validateFee(req.Amount, tenant.MonthlyFee, req.EffectiveDate, req.PaidAt); err != nil {
 		return nil, fmt.Errorf("mandatory fee validation failed: %w", err)
 	}
 
@@ -256,6 +267,7 @@ func (s *TenantService) CreateMandatoryFee(ctx context.Context, tenantID string,
 		Amount:        req.Amount,
 		Description:   req.Description,
 		EffectiveDate: req.EffectiveDate,
+		PaidAt:        req.PaidAt,
 	}
 
 	created, err := s.feeRepo.CreateMandatory(ctx, fee)
@@ -316,29 +328,77 @@ func (s *TenantService) ListFees(ctx context.Context, tenantID string, claims *a
 }
 
 // UpdateFee updates a fee record by ID.
-func (s *TenantService) UpdateFee(ctx context.Context, feeID string, req *UpdateFeeRequest, claims *auth.Claims) error {
-	// Fetch existing fee to determine its type and parent tenant
+func (s *TenantService) UpdateFee(ctx context.Context, tenantID, feeID string, req *UpdateFeeRequest, claims *auth.Claims) error {
+	// Verify tenant exists and user has access
+	tenant, err := s.getTenantForFee(ctx, tenantID, claims)
+	if err != nil {
+		return err
+	}
+
 	// Try mandatory first, then voluntary
-	mFee, err := s.feeRepo.ListMandatoryByTenant(ctx, feeID)
-	// If the fee doesn't match, try voluntary
-	vFee, err2 := s.feeRepo.ListVoluntaryByTenant(ctx, feeID)
+	mFee, mErr := s.feeRepo.GetMandatoryByID(ctx, feeID)
+	if mErr == nil && mFee != nil {
+		if mFee.TenantID != tenantID {
+			return ErrTenantNotFound
+		}
+		if err := s.validateFee(req.Amount, tenant.MonthlyFee, req.EffectiveDate, req.PaidAt); err != nil {
+			return err
+		}
+		mFee.Amount = req.Amount
+		mFee.Description = req.Description
+		mFee.EffectiveDate = req.EffectiveDate
+		mFee.PaidAt = req.PaidAt
+		_, err := s.feeRepo.UpdateMandatory(ctx, mFee)
+		return err
+	}
 
-	// We can't easily find a single fee by ID from the repository interface as designed.
-	// For now, return an error - the handler layer will have access to fee-specific lookups.
-	_ = mFee
-	_ = vFee
-	_ = err
-	_ = err2
+	// Try voluntary
+	vFee, vErr := s.feeRepo.GetVoluntaryByID(ctx, feeID)
+	if vErr == nil && vFee != nil {
+		if vFee.TenantID != tenantID {
+			return ErrTenantNotFound
+		}
+		if err := s.validateFee(req.Amount, tenant.MonthlyFee, req.EffectiveDate, req.PaidAt); err != nil {
+			return err
+		}
+		vFee.Amount = req.Amount
+		vFee.Description = req.Description
+		vFee.EffectiveDate = req.EffectiveDate
+		vFee.PaidAt = req.PaidAt
+		_, err := s.feeRepo.UpdateVoluntary(ctx, vFee)
+		return err
+	}
 
-	return fmt.Errorf("update fee by ID not directly supported: use tenant-scoped update")
+	return ErrTenantNotFound
 }
 
 // DeleteFee deletes a fee record by ID.
-func (s *TenantService) DeleteFee(ctx context.Context, feeID string, claims *auth.Claims) error {
-	// Similar to UpdateFee, we need a fee-specific lookup.
-	// The repository doesn't support direct FindByID for fees.
-	// The handler layer should resolve the tenant and call the appropriate method.
-	return fmt.Errorf("delete fee by ID not directly supported: use tenant-scoped delete")
+func (s *TenantService) DeleteFee(ctx context.Context, tenantID, feeID string, claims *auth.Claims) error {
+	// Verify tenant exists and user has access
+	_, err := s.getTenantForFee(ctx, tenantID, claims)
+	if err != nil {
+		return err
+	}
+
+	// Try mandatory first, then voluntary
+	mFee, mErr := s.feeRepo.GetMandatoryByID(ctx, feeID)
+	if mErr == nil && mFee != nil {
+		if mFee.TenantID != tenantID {
+			return ErrTenantNotFound
+		}
+		return s.feeRepo.DeleteMandatory(ctx, feeID)
+	}
+
+	// Try voluntary
+	vFee, vErr := s.feeRepo.GetVoluntaryByID(ctx, feeID)
+	if vErr == nil && vFee != nil {
+		if vFee.TenantID != tenantID {
+			return ErrTenantNotFound
+		}
+		return s.feeRepo.DeleteVoluntary(ctx, feeID)
+	}
+
+	return ErrTenantNotFound
 }
 
 // --- Private Helpers ---
@@ -373,11 +433,11 @@ func (s *TenantService) validateFee(amount, monthlyFee decimal.Decimal, effectiv
 // For residents: verifies tenant is in user's assigned list.
 // For RT officers: verifies tenant territory matches claims territory.
 // For RW officers: always allowed.
-// Returns ErrTenantNotFound on mismatch (same error for not-found vs no-access).
+// Returns ErrCrossTerritoryAccess for valid tenants outside user's scope,
+// and ErrTenantNotFound only when the tenant genuinely doesn't exist.
 func (s *TenantService) validateTenantAccess(ctx context.Context, tenant *entity.Tenant, claims *auth.Claims) (*entity.Tenant, error) {
 	switch claims.Role {
 	case "resident":
-		// Check if tenant is in user's assigned list
 		userTenants, err := s.tenantRepo.ListByUserID(ctx, claims.UserID)
 		if err != nil {
 			return nil, ErrTenantNotFound
@@ -387,14 +447,14 @@ func (s *TenantService) validateTenantAccess(ctx context.Context, tenant *entity
 				return tenant, nil
 			}
 		}
-		return nil, ErrTenantNotFound
+		return nil, ErrCrossTerritoryAccess
 
 	case "rw_officer":
 		return tenant, nil
 
 	default: // rt_officer
 		if tenant.TerritoryID != claims.TerritoryID {
-			return nil, ErrTenantNotFound
+			return nil, ErrCrossTerritoryAccess
 		}
 		return tenant, nil
 	}
@@ -407,5 +467,10 @@ func (s *TenantService) getTenantForFee(ctx context.Context, tenantID string, cl
 		return nil, ErrTenantNotFound
 	}
 
-	return s.validateTenantAccess(ctx, tenant, claims)
+	validated, err := s.validateTenantAccess(ctx, tenant, claims)
+	if err != nil {
+		return nil, err
+	}
+
+	return validated, nil
 }

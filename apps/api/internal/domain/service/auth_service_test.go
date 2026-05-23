@@ -173,7 +173,7 @@ func newTestAuthService(t *testing.T) (*AuthService, *mockUserRepository, *mockR
 func TestAuthService_Register_Success(t *testing.T) {
 	svc, _, _, _ := newTestAuthService(t)
 
-	user, err := svc.Register("test@example.com", "SecurePass123!", "Test User", "rt-01")
+	user, err := svc.Register("test@example.com", "SecurePass123!", "Test User", "resident", "rt-01")
 	if err != nil {
 		t.Fatalf("Register() error = %v", err)
 	}
@@ -198,12 +198,12 @@ func TestAuthService_Register_Success(t *testing.T) {
 func TestAuthService_Register_DuplicateEmail(t *testing.T) {
 	svc, _, _, _ := newTestAuthService(t)
 
-	_, err := svc.Register("test@example.com", "SecurePass123!", "Test User", "rt-01")
+	_, err := svc.Register("test@example.com", "SecurePass123!", "Test User", "resident", "rt-01")
 	if err != nil {
 		t.Fatalf("first Register() error = %v", err)
 	}
 
-	_, err = svc.Register("test@example.com", "SecurePass123!", "Another User", "rt-01")
+	_, err = svc.Register("test@example.com", "SecurePass123!", "Another User", "resident", "rt-01")
 	if !errors.Is(err, ErrDuplicateEmail) {
 		t.Errorf("Register() error = %v, want ErrDuplicateEmail", err)
 	}
@@ -212,7 +212,7 @@ func TestAuthService_Register_DuplicateEmail(t *testing.T) {
 func TestAuthService_Register_WeakPassword(t *testing.T) {
 	svc, _, _, _ := newTestAuthService(t)
 
-	_, err := svc.Register("test@example.com", "weak", "Test User", "rt-01")
+	_, err := svc.Register("test@example.com", "weak", "Test User", "resident", "rt-01")
 	if err == nil {
 		t.Fatal("Register() expected error for weak password, got nil")
 	}
@@ -222,7 +222,7 @@ func TestAuthService_Login_Success(t *testing.T) {
 	svc, _, _, _ := newTestAuthService(t)
 
 	// Register first
-	_, err := svc.Register("test@example.com", "SecurePass123!", "Test User", "rt-01")
+	_, err := svc.Register("test@example.com", "SecurePass123!", "Test User", "resident", "rt-01")
 	if err != nil {
 		t.Fatalf("Register() error = %v", err)
 	}
@@ -247,7 +247,7 @@ func TestAuthService_Login_Success(t *testing.T) {
 func TestAuthService_Login_InvalidCredentials(t *testing.T) {
 	svc, _, _, _ := newTestAuthService(t)
 
-	_, err := svc.Register("test@example.com", "SecurePass123!", "Test User", "rt-01")
+	_, err := svc.Register("test@example.com", "SecurePass123!", "Test User", "resident", "rt-01")
 	if err != nil {
 		t.Fatalf("Register() error = %v", err)
 	}
@@ -270,7 +270,7 @@ func TestAuthService_Login_UserNotFound(t *testing.T) {
 func TestAuthService_ResetPasswordRequest_Success(t *testing.T) {
 	svc, _, _, emailSvc := newTestAuthService(t)
 
-	_, err := svc.Register("test@example.com", "SecurePass123!", "Test User", "rt-01")
+	_, err := svc.Register("test@example.com", "SecurePass123!", "Test User", "resident", "rt-01")
 	if err != nil {
 		t.Fatalf("Register() error = %v", err)
 	}
@@ -302,7 +302,7 @@ func TestAuthService_ResetPassword_Success(t *testing.T) {
 	svc, _, resetRepo, _ := newTestAuthService(t)
 
 	// Register
-	_, err := svc.Register("test@example.com", "SecurePass123!", "Test User", "rt-01")
+	_, err := svc.Register("test@example.com", "SecurePass123!", "Test User", "resident", "rt-01")
 	if err != nil {
 		t.Fatalf("Register() error = %v", err)
 	}
@@ -356,7 +356,7 @@ func TestAuthService_ResetPassword_ExpiredToken(t *testing.T) {
 	svc, _, resetRepo, _ := newTestAuthService(t)
 
 	// Register a user
-	_, err := svc.Register("test@example.com", "SecurePass123!", "Test User", "rt-01")
+	_, err := svc.Register("test@example.com", "SecurePass123!", "Test User", "resident", "rt-01")
 	if err != nil {
 		t.Fatalf("Register() error = %v", err)
 	}
@@ -383,7 +383,7 @@ func TestAuthService_ResetPassword_UsedToken(t *testing.T) {
 	svc, _, resetRepo, _ := newTestAuthService(t)
 
 	// Register a user
-	_, err := svc.Register("test@example.com", "SecurePass123!", "Test User", "rt-01")
+	_, err := svc.Register("test@example.com", "SecurePass123!", "Test User", "resident", "rt-01")
 	if err != nil {
 		t.Fatalf("Register() error = %v", err)
 	}
@@ -410,7 +410,7 @@ func TestAuthService_Login_InactiveUser(t *testing.T) {
 	svc, userRepo, _, _ := newTestAuthService(t)
 
 	// Register a user
-	_, err := svc.Register("test@example.com", "SecurePass123!", "Test User", "rt-01")
+	_, err := svc.Register("test@example.com", "SecurePass123!", "Test User", "resident", "rt-01")
 	if err != nil {
 		t.Fatalf("Register() error = %v", err)
 	}

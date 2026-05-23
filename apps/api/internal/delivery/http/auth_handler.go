@@ -36,6 +36,7 @@ type RegisterRequest struct {
 	Email       string `json:"email"`
 	Password    string `json:"password"`
 	FullName    string `json:"full_name"`
+	Role        string `json:"role"`
 	TerritoryID string `json:"territory_id"`
 }
 
@@ -57,7 +58,7 @@ func (h *AuthHandler) Register(c *fiber.Ctx) error {
 		})
 	}
 
-	user, err := h.authService.Register(req.Email, req.Password, req.FullName, req.TerritoryID)
+	user, err := h.authService.Register(req.Email, req.Password, req.FullName, req.Role, req.TerritoryID)
 	if err != nil {
 		switch {
 		case err == service.ErrDuplicateEmail:
