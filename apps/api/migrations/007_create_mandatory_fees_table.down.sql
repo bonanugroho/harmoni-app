@@ -1,0 +1,1 @@
+DROP TABLE IF EXISTS mandatory_fees CASCADE;

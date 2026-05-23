@@ -1,0 +1,1 @@
+DROP TABLE IF EXISTS voluntary_fees CASCADE;
