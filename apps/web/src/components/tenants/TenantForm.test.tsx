@@ -74,6 +74,45 @@ describe('TenantForm', () => {
     });
   });
 
+  it('shows validation error when total mandatory fees exceed monthly fee cap', async () => {
+    renderForm();
+
+    fireEvent.change(screen.getByLabelText(/block/i), {
+      target: { value: 'A' },
+    });
+    fireEvent.change(screen.getByLabelText(/unit number/i), {
+      target: { value: '01' },
+    });
+    fireEvent.change(screen.getByLabelText(/monthly fee/i), {
+      target: { value: '50000' },
+    });
+
+    // Add a second mandatory fee
+    fireEvent.click(screen.getByText('Add Another Fee'));
+
+    // Fill both fees with amounts that sum > 50000
+    const amountInputs = screen.getAllByLabelText(/amount/i);
+    fireEvent.change(amountInputs[0], { target: { value: '30000' } });
+    fireEvent.change(amountInputs[1], { target: { value: '30000' } });
+
+    // Fill descriptions and dates
+    const descriptionInputs = screen.getAllByLabelText(/description/i);
+    fireEvent.change(descriptionInputs[0], { target: { value: 'Security' } });
+    fireEvent.change(descriptionInputs[1], { target: { value: 'Maintenance' } });
+
+    const dateInputs = screen.getAllByLabelText(/effective date/i);
+    fireEvent.change(dateInputs[0], { target: { value: '2026-06-01' } });
+    fireEvent.change(dateInputs[1], { target: { value: '2026-06-01' } });
+
+    fireEvent.click(screen.getByRole('button', { name: /save tenant/i }));
+
+    await waitFor(() => {
+      expect(
+        screen.getByText('Total mandatory fees cannot exceed the monthly fee.')
+      ).toBeInTheDocument();
+    });
+  });
+
   it('shows validation error for empty fee description on submit', async () => {
     renderForm();
 

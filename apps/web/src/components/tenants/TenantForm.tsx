@@ -41,6 +41,7 @@ export default function TenantForm({
   ]);
   const [errors, setErrors] = useState<FormErrors>({});
   const [submitError, setSubmitError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (initialData) {
@@ -67,37 +68,41 @@ export default function TenantForm({
       newErrors.monthly_fee = 'Monthly fee must be a positive amount.';
     }
 
-    if (mandatoryFees.length === 0) {
-      newErrors.mandatoryFees = 'At least one mandatory fee is required.';
-    }
+    if (!initialData) {
+      if (mandatoryFees.length === 0) {
+        newErrors.mandatoryFees = 'At least one mandatory fee is required.';
+      }
 
-    const feeDescriptionErrors: Record<number, string> = {};
-    const feeAmountErrors: Record<number, string> = {};
-    const feeEffectiveDateErrors: Record<number, string> = {};
+      const feeDescriptionErrors: Record<number, string> = {};
+      const feeAmountErrors: Record<number, string> = {};
+      const feeEffectiveDateErrors: Record<number, string> = {};
 
-    mandatoryFees.forEach((f, i) => {
-      if (!f.description.trim()) {
-        feeDescriptionErrors[i] = 'Description is required.';
+      const totalMandatoryFees = mandatoryFees.reduce((sum, f) => sum + Number(f.amount), 0);
+      if (fee > 0 && totalMandatoryFees > fee) {
+        newErrors.mandatoryFees = 'Total mandatory fees cannot exceed the monthly fee.';
       }
-      if (f.amount <= 0) {
-        feeAmountErrors[i] = 'Amount is required.';
-      }
-      if (fee > 0 && f.amount > fee) {
-        feeAmountErrors[i] = "Fee amount cannot exceed the tenant's monthly fee.";
-      }
-      if (!f.effective_date.trim()) {
-        feeEffectiveDateErrors[i] = 'Effective date is required.';
-      }
-    });
 
-    if (Object.keys(feeDescriptionErrors).length > 0) {
-      newErrors.feeDescription = feeDescriptionErrors;
-    }
-    if (Object.keys(feeAmountErrors).length > 0) {
-      newErrors.feeAmount = feeAmountErrors;
-    }
-    if (Object.keys(feeEffectiveDateErrors).length > 0) {
-      newErrors.feeEffectiveDate = feeEffectiveDateErrors;
+      mandatoryFees.forEach((f, i) => {
+        if (!f.description.trim()) {
+          feeDescriptionErrors[i] = 'Description is required.';
+        }
+        if (f.amount <= 0) {
+          feeAmountErrors[i] = 'Amount is required.';
+        }
+        if (!f.effective_date.trim()) {
+          feeEffectiveDateErrors[i] = 'Effective date is required.';
+        }
+      });
+
+      if (Object.keys(feeDescriptionErrors).length > 0) {
+        newErrors.feeDescription = feeDescriptionErrors;
+      }
+      if (Object.keys(feeAmountErrors).length > 0) {
+        newErrors.feeAmount = feeAmountErrors;
+      }
+      if (Object.keys(feeEffectiveDateErrors).length > 0) {
+        newErrors.feeEffectiveDate = feeEffectiveDateErrors;
+      }
     }
 
     return newErrors;
@@ -144,20 +149,27 @@ export default function TenantForm({
       unit_number: unitNumber.trim(),
       occupancy,
       monthly_fee: Number(monthlyFee),
-      mandatory_fees: mandatoryFees.map((f) => ({
-        type: 'mandatory' as const,
-        description: f.description.trim(),
-        amount: f.amount,
-        effective_date: f.effective_date,
-      })),
+      ...(initialData
+        ? {}
+        : {
+            mandatory_fees: mandatoryFees.map((f) => ({
+              type: 'mandatory' as const,
+              description: f.description.trim(),
+              amount: f.amount,
+              effective_date: f.effective_date,
+            })),
+          }),
     };
 
+    setIsSubmitting(true);
     try {
       await onSubmit(data);
     } catch (err) {
       setSubmitError(
         err instanceof Error ? err.message : 'Failed to save. Check your connection and try again.'
       );
+    } finally {
+      setIsSubmitting(false);
     }
   }
 
@@ -224,86 +236,88 @@ export default function TenantForm({
             error={errors.monthly_fee}
           />
 
-          {/* Mandatory Fees Section */}
-          <div className="border-t border-gray-200 pt-6">
-            <h2 className="mb-4 text-sm font-semibold text-gray-700">
-              Mandatory Fees
-            </h2>
+          {/* Mandatory Fees Section (create mode only — fees managed separately on detail page) */}
+          {!initialData && (
+            <div className="border-t border-gray-200 pt-6">
+              <h2 className="mb-4 text-sm font-semibold text-gray-700">
+                Mandatory Fees
+              </h2>
 
-            {errors.mandatoryFees && (
-              <p className="mb-3 text-sm text-red-600" role="alert">
-                {errors.mandatoryFees}
-              </p>
-            )}
+              {errors.mandatoryFees && (
+                <p className="mb-3 text-sm text-red-600" role="alert">
+                  {errors.mandatoryFees}
+                </p>
+              )}
 
-            {mandatoryFees.map((fee, index) => (
-              <div
-                key={index}
-                className="mb-4 rounded-md border border-gray-100 bg-gray-50 p-4"
+              {mandatoryFees.map((fee, index) => (
+                <div
+                  key={index}
+                  className="mb-4 rounded-md border border-gray-100 bg-gray-50 p-4"
+                >
+                  <div className="flex items-start justify-between">
+                    <span className="text-xs font-medium text-gray-500">
+                      Fee {index + 1}
+                    </span>
+                    {mandatoryFees.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveFee(index)}
+                        className="flex min-h-[44px] min-w-[44px] items-center justify-center text-red-500 hover:text-red-700"
+                        aria-label={`Remove fee ${index + 1}`}
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="mt-2 space-y-3">
+                    <Input
+                      name={`fee_description_${index}`}
+                      label="Description"
+                      placeholder="Security Fee"
+                      value={fee.description}
+                      onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                        handleFeeChange(index, 'description', e.target.value)
+                      }
+                      error={errors.feeDescription?.[index]}
+                    />
+
+                    <Input
+                      name={`fee_amount_${index}`}
+                      label="Amount (Rp)"
+                      placeholder="25000"
+                      inputMode="numeric"
+                      value={fee.amount || ''}
+                      onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                        handleFeeChange(index, 'amount', e.target.value)
+                      }
+                      error={errors.feeAmount?.[index]}
+                    />
+
+                    <Input
+                      name={`fee_effective_date_${index}`}
+                      label="Effective Date"
+                      type="date"
+                      value={fee.effective_date}
+                      onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                        handleFeeChange(index, 'effective_date', e.target.value)
+                      }
+                      error={errors.feeEffectiveDate?.[index]}
+                    />
+                  </div>
+                </div>
+              ))}
+
+              <button
+                type="button"
+                onClick={handleAddFee}
+                className="mt-3 flex items-center gap-1 text-sm font-medium text-blue-600 hover:text-blue-700"
               >
-                <div className="flex items-start justify-between">
-                  <span className="text-xs font-medium text-gray-500">
-                    Fee {index + 1}
-                  </span>
-                  {mandatoryFees.length > 1 && (
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveFee(index)}
-                      className="flex min-h-[44px] min-w-[44px] items-center justify-center text-red-500 hover:text-red-700"
-                      aria-label={`Remove fee ${index + 1}`}
-                    >
-                      <X className="h-4 w-4" />
-                    </button>
-                  )}
-                </div>
-
-                <div className="mt-2 space-y-3">
-                  <Input
-                    name={`fee_description_${index}`}
-                    label="Description"
-                    placeholder="Security Fee"
-                    value={fee.description}
-                    onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                      handleFeeChange(index, 'description', e.target.value)
-                    }
-                    error={errors.feeDescription?.[index]}
-                  />
-
-                  <Input
-                    name={`fee_amount_${index}`}
-                    label="Amount (Rp)"
-                    placeholder="25000"
-                    type="number"
-                    value={fee.amount || ''}
-                    onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                      handleFeeChange(index, 'amount', e.target.value)
-                    }
-                    error={errors.feeAmount?.[index]}
-                  />
-
-                  <Input
-                    name={`fee_effective_date_${index}`}
-                    label="Effective Date"
-                    type="date"
-                    value={fee.effective_date}
-                    onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                      handleFeeChange(index, 'effective_date', e.target.value)
-                    }
-                    error={errors.feeEffectiveDate?.[index]}
-                  />
-                </div>
-              </div>
-            ))}
-
-            <button
-              type="button"
-              onClick={handleAddFee}
-              className="mt-3 flex items-center gap-1 text-sm font-medium text-blue-600 hover:text-blue-700"
-            >
-              <Plus className="h-4 w-4" />
-              Add Another Fee
-            </button>
-          </div>
+                <Plus className="h-4 w-4" />
+                Add Another Fee
+              </button>
+            </div>
+          )}
 
           {/* Bottom Buttons */}
           <div className="flex items-center justify-end gap-3 pt-4">
@@ -315,10 +329,10 @@ export default function TenantForm({
             </Link>
             <button
               type="submit"
-              disabled={isLoading}
+              disabled={isLoading || isSubmitting}
               className="flex min-h-[44px] items-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              {isLoading ? (
+              {isLoading || isSubmitting ? (
                 <>
                   <svg
                     className="h-4 w-4 animate-spin"

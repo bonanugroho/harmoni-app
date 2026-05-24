@@ -7,6 +7,8 @@ import type { Fee, CreateFeeRequest } from '../../types/fee';
 interface FeeFormProps {
   tenantId: string;
   monthlyFee: number;
+  existingMandatoryTotal?: number;
+  editingFeeId?: string;
   initialData?: Fee;
   onSubmit: (data: CreateFeeRequest) => Promise<void>;
   isLoading?: boolean;
@@ -16,6 +18,8 @@ interface FeeFormProps {
 export default function FeeForm({
   tenantId: _tenantId,
   monthlyFee,
+  existingMandatoryTotal = 0,
+  editingFeeId,
   initialData,
   onSubmit,
   isLoading = false,
@@ -29,13 +33,17 @@ export default function FeeForm({
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitError, setSubmitError] = useState('');
 
+function toDateInputValue(dateStr: string): string {
+  return dateStr.split('T')[0];
+}
+
   useEffect(() => {
     if (initialData) {
       setFeeType(initialData.type || 'mandatory');
       setDescription(initialData.description);
       setAmount(String(initialData.amount));
-      setEffectiveDate(initialData.effective_date);
-      setPaidAt(initialData.paid_at || '');
+      setEffectiveDate(toDateInputValue(initialData.effective_date));
+      setPaidAt(initialData.paid_at ? toDateInputValue(initialData.paid_at) : '');
     }
   }, [initialData]);
 
@@ -52,6 +60,13 @@ export default function FeeForm({
       errs.amount = 'Amount must be a positive number.';
     } else if (parseFloat(amount) > monthlyFee) {
       errs.amount = "Fee amount cannot exceed the tenant's monthly fee.";
+    } else if (feeType === 'mandatory') {
+      const otherMandatoryTotal = editingFeeId
+        ? existingMandatoryTotal - (initialData?.amount || 0)
+        : existingMandatoryTotal;
+      if (otherMandatoryTotal + parseFloat(amount) > monthlyFee) {
+        errs.amount = 'Total mandatory fees cannot exceed the monthly fee.';
+      }
     }
 
     if (!effectiveDate.trim()) {
@@ -135,7 +150,7 @@ export default function FeeForm({
       <Input
         name="amount"
         label="Amount (Rp)"
-        type="number"
+        inputMode="numeric"
         placeholder="25000"
         value={amount}
         onChange={(e) => setAmount(e.target.value)}

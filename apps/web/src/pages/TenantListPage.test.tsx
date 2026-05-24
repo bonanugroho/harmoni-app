@@ -87,6 +87,18 @@ describe('TenantListPage', () => {
     expect(screen.getByText(/Unit 10/i)).toBeInTheDocument();
   });
 
+  it('shows EmptyState when data is null', () => {
+    (useQuery as ReturnType<typeof vi.fn>).mockReturnValue({
+      data: null,
+      isLoading: false,
+      isError: false,
+      error: null,
+    });
+
+    renderPage();
+    expect(screen.getByText('No Tenants Yet')).toBeInTheDocument();
+  });
+
   it('shows EmptyState when data is empty array', () => {
     (useQuery as ReturnType<typeof vi.fn>).mockReturnValue({
       data: [],

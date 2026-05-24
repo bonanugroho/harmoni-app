@@ -78,14 +78,10 @@ export default function TenantListPage() {
       )}
 
       {/* Empty State (no tenants at all) */}
-      {!isLoading && !isError && tenants && tenants.length === 0 && (
+      {!isLoading && !isError && (!tenants || tenants.length === 0) && (
         <EmptyState
           heading="No Tenants Yet"
           body="Start by adding your first tenant to this RT."
-          action={{
-            label: '+ Add Tenant',
-            onClick: () => navigate('/tenants/new'),
-          }}
         />
       )}
 

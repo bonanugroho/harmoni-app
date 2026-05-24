@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
+import { Pencil } from 'lucide-react';
 import { useTenant } from '../hooks/useTenant';
 import { useFees } from '../hooks/useFees';
 import { useCreateFee } from '../hooks/useCreateFee';
@@ -59,6 +60,10 @@ export default function TenantDetailPage() {
     }
   }
 
+  const existingMandatoryTotal = (fees?.mandatory_fees || []).reduce(
+    (sum, f) => sum + Number(f.amount), 0
+  );
+
   function handleEditFee(feeId: string) {
     const allFees = [
       ...(fees?.mandatory_fees || []),
@@ -111,6 +116,14 @@ export default function TenantDetailPage() {
         <span className="text-sm font-semibold text-gray-900">
           {formatIDR(tenant.monthly_fee)}/mo
         </span>
+        <button
+          onClick={() => navigate(`/tenants/${tenant.id}/edit`)}
+          className="ml-auto flex min-h-[44px] min-w-[44px] items-center justify-center gap-1.5 rounded-md px-3 text-sm font-medium text-blue-600 hover:bg-blue-50"
+          aria-label={`Edit ${tenant.block}-${tenant.unit_number}`}
+        >
+          <Pencil className="h-4 w-4" />
+          Edit
+        </button>
       </div>
 
       <FeeList
@@ -138,6 +151,8 @@ export default function TenantDetailPage() {
             <FeeForm
               tenantId={id!}
               monthlyFee={tenant.monthly_fee}
+              existingMandatoryTotal={existingMandatoryTotal}
+              editingFeeId={editingFee?.id}
               initialData={editingFee || undefined}
               onSubmit={handleFeeSubmit}
               isLoading={createFeeMutation.isPending || updateFeeMutation.isPending}

@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../routes/ProtectedRoute';
-import { Building2, BarChart3, Menu, X, ChevronLeft } from 'lucide-react';
+import { Building2, SwatchBook, LayoutDashboard, Menu, X, ChevronLeft } from 'lucide-react';
 
 interface AppLayoutProps {
   children: ReactNode;
@@ -16,7 +16,7 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   { label: 'Tenants', path: '/tenants', icon: Building2 },
-  { label: 'Reports', path: '/reports', icon: BarChart3 },
+  { label: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
   { label: 'Settings', path: '/settings', icon: ChevronLeft, roles: ['rt_officer', 'rw_officer'] },
 ];
 
@@ -70,8 +70,9 @@ export default function AppLayout({ children }: AppLayoutProps) {
         <div className="flex h-16 items-center justify-between border-b border-gray-200 px-4">
           <button
             onClick={() => handleNavigate('/dashboard')}
-            className="text-[28px] font-semibold text-gray-900"
+            className="flex items-center gap-2 text-[28px] font-semibold text-gray-900"
           >
+            <SwatchBook className="h-7 w-7" />
             Harmoni
           </button>
           <button

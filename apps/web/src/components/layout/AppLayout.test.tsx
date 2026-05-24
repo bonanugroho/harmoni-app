@@ -53,10 +53,10 @@ describe('AppLayout', () => {
     expect(screen.getByText('Page Content')).toBeInTheDocument();
   });
 
-  it('shows sidebar navigation links (Tenants, Reports)', () => {
+  it('shows sidebar navigation links (Tenants, Dashboard)', () => {
     renderAppLayout();
     expect(screen.getByText('Tenants')).toBeInTheDocument();
-    expect(screen.getByText('Reports')).toBeInTheDocument();
+    expect(screen.getByText('Dashboard')).toBeInTheDocument();
   });
 
   it('highlights Tenants link when on /tenants path', () => {
@@ -65,6 +65,14 @@ describe('AppLayout', () => {
     expect(tenantsButton?.className).toContain('bg-blue-100');
     expect(tenantsButton?.className).toContain('text-blue-700');
     expect(tenantsButton?.className).toContain('border-blue-600');
+  });
+
+  it('highlights Dashboard link when on /dashboard path', () => {
+    mockPathname = '/dashboard';
+    renderAppLayout();
+    const dashboardButton = screen.getByText('Dashboard').closest('button');
+    expect(dashboardButton?.className).toContain('bg-blue-100');
+    expect(dashboardButton?.className).toContain('text-blue-700');
   });
 
   it('shows Settings link for rt_officer role', () => {
