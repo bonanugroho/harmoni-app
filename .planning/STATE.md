@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: Executing Phase 3
-last_updated: "2026-05-24T17:00:00.000Z"
+last_updated: "2026-05-24T17:05:00.000Z"
 progress:
   total_phases: 5
   completed_phases: 2
   total_plans: 14
-  completed_plans: 12
-  percent: 86
+  completed_plans: 13
+  percent: 93
 ---
 
 # State
@@ -72,6 +72,12 @@ See: `.planning/PROJECT.md` (updated 2026-05-19)
 - **Auth query staleTime:** `/auth/me` uses `staleTime: 5 min` since user session rarely changes mid-session
 - **ProtectedRoute migrated:** Manual `fetch` + `useEffect` + `useState` replaced with `useQuery(['auth', 'me'])`
 
+## Key Decisions (Phase 3, Plan 04)
+
+- **D-19:** TenantCard uses optional fee count props (default 0) since Tenant type excludes fee counts
+- **D-20:** TenantForm isLoading driven by parent mutation isPending, not internal loading state
+- **D-21:** Client-side search debounced at 300ms via useEffect + setTimeout for responsive filtering
+
 ## Phase 3 Context & UI-SPEC
 
 Context gathered on 2026-05-23. Decisions documented in `.planning/phases/03-tenant-fee-ui/03-CONTEXT.md`.
@@ -89,7 +95,7 @@ UI design contract approved on 2026-05-23. See `.planning/phases/03-tenant-fee-u
 - [x] 03-01 — Foundation: api helper, types, services, QueryClientProvider
 - [x] 03-02 — UI components + AppLayout
 - [x] 03-03 — TanStack Query hooks + ProtectedRoute migration
-- [ ] 03-04 — Tenant pages (list, create, edit)
+- [x] 03-04 — Tenant pages (list, create, edit)
 - [ ] 03-05 — Fee pages (detail, fee management)
 
 ## Completed Plans
@@ -98,6 +104,7 @@ UI design contract approved on 2026-05-23. See `.planning/phases/03-tenant-fee-u
 - [x] 03-01 — Foundation: api helper, types, services, QueryClientProvider
 - [x] 03-02 — UI components + AppLayout
 - [x] 03-03 — TanStack Query hooks + ProtectedRoute migration
+- [x] 03-04 — Tenant pages (list, create, edit)
 
 ### Phase 2 — Tenant & Fee Management
 - [x] 02-01 — Database migrations & entity definitions
