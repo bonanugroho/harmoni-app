@@ -1,5 +1,7 @@
-import { useState, useEffect, createContext, useContext, type ReactNode } from 'react';
+import { createContext, useContext, type ReactNode } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
+import { request } from '../services/api';
 import type { User } from '../types/auth';
 
 interface AuthContextType {
@@ -23,35 +25,19 @@ export function useAuth(): AuthContextType {
 }
 
 export default function ProtectedRoute({ children, requiredRole }: ProtectedRouteProps) {
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
-  const [user, setUser] = useState<User | null>(null);
   const location = useLocation();
 
-  useEffect(() => {
-    fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/auth/me`, {
-      credentials: 'include',
-    })
-      .then((res) => {
-        if (!res.ok) {
-          setIsAuthenticated(false);
-          setUser(null);
-          return;
-        }
-        return res.json();
-      })
-      .then((data) => {
-        if (data) {
-          setIsAuthenticated(true);
-          setUser(data.user);
-        }
-      })
-      .catch(() => {
-        setIsAuthenticated(false);
-        setUser(null);
-      });
-  }, []);
+  const { data, isLoading, isError } = useQuery({
+    queryKey: ['auth', 'me'],
+    queryFn: async () => {
+      const response = await request<{ user: User }>('/auth/me');
+      return response;
+    },
+    retry: false,
+    staleTime: 5 * 60 * 1000,
+  });
 
-  if (isAuthenticated === null) {
+  if (isLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <div className="text-center">
@@ -62,9 +48,12 @@ export default function ProtectedRoute({ children, requiredRole }: ProtectedRout
     );
   }
 
-  if (!isAuthenticated) {
+  if (isError) {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
+
+  const user = data?.user ?? null;
+  const isAuthenticated = !!user;
 
   if (requiredRole && user?.role !== requiredRole) {
     return (
