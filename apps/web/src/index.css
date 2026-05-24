@@ -15,6 +15,9 @@
   --color-strength-weak: #DC2626;
   --color-strength-medium: #F59E0B;
   --color-strength-strong: #10B981;
+  --color-sidebar: #F3F4F6;
+  --color-sidebar-hover: #E5E7EB;
+  --color-sidebar-active: #DBEAFE;
 }
 
 /* Base styles */
