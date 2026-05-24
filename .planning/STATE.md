@@ -3,11 +3,11 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: Executing Phase 3
-last_updated: "2026-05-23T15:30:00.000Z"
+last_updated: "2026-05-24T12:00:00.000Z"
 progress:
   total_phases: 5
   completed_phases: 2
-  total_plans: 9
+  total_plans: 14
   completed_plans: 9
   percent: 40
 ---
@@ -62,6 +62,14 @@ Key decisions:
 - **D-15 to D-17:** Mock TanStack Query hooks in tests
 
 UI design contract approved on 2026-05-23. See `.planning/phases/03-tenant-fee-ui/03-UI-SPEC.md` — 6/6 dimensions passed.
+
+## Phase 3 — Tenant & Fee UI
+
+- [ ] 03-01 — Foundation: api helper, types, services, QueryClientProvider
+- [ ] 03-02 — UI components + AppLayout
+- [ ] 03-03 — TanStack Query hooks + ProtectedRoute migration
+- [ ] 03-04 — Tenant pages (list, create, edit)
+- [ ] 03-05 — Fee pages (detail, fee management)
 
 ## Completed Plans
 
