@@ -44,11 +44,11 @@ date: 2026-05-19
 5. All pages work on low-end mobile browsers with 44px touch targets.
 6. Unit tests cover all new components and pages.
 
-**Plans:** 2/5 plans complete
+**Plans:** 3/5 plans complete
 
 - [x] 03-01-PLAN.md — Foundation: api helper, types, services, QueryClientProvider
 - [x] 03-02-PLAN.md — UI components + AppLayout
-- [ ] 03-03-PLAN.md — TanStack Query hooks + ProtectedRoute migration
+- [x] 03-03-PLAN.md — TanStack Query hooks + ProtectedRoute migration
 - [ ] 03-04-PLAN.md — Tenant pages (list, create, edit)
 - [ ] 03-05-PLAN.md — Fee pages (detail, fee management)
 

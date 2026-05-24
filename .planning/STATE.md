@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: Executing Phase 3
-last_updated: "2026-05-24T16:55:00.000Z"
+last_updated: "2026-05-24T17:00:00.000Z"
 progress:
   total_phases: 5
   completed_phases: 2
   total_plans: 14
-  completed_plans: 11
-  percent: 79
+  completed_plans: 12
+  percent: 86
 ---
 
 # State
@@ -65,6 +65,13 @@ See: `.planning/PROJECT.md` (updated 2026-05-19)
 - **D-14:** AppLayout sidebar uses fixed positioning with translateX for responsive behavior
 - **D-15:** Settings link gated by user role (rt_officer/rw_officer) via useAuth()
 
+## Key Decisions (Phase 3, Plan 03)
+
+- **D-17 confirmed:** Custom hooks have no dedicated test files — tested implicitly via services they call; components tested via mocked query hooks
+- **Mutation invalidation pattern:** All mutation hooks call `invalidateQueries` in `onSuccess` to prevent stale cache
+- **Auth query staleTime:** `/auth/me` uses `staleTime: 5 min` since user session rarely changes mid-session
+- **ProtectedRoute migrated:** Manual `fetch` + `useEffect` + `useState` replaced with `useQuery(['auth', 'me'])`
+
 ## Phase 3 Context & UI-SPEC
 
 Context gathered on 2026-05-23. Decisions documented in `.planning/phases/03-tenant-fee-ui/03-CONTEXT.md`.
@@ -81,7 +88,7 @@ UI design contract approved on 2026-05-23. See `.planning/phases/03-tenant-fee-u
 
 - [x] 03-01 — Foundation: api helper, types, services, QueryClientProvider
 - [x] 03-02 — UI components + AppLayout
-- [ ] 03-03 — TanStack Query hooks + ProtectedRoute migration
+- [x] 03-03 — TanStack Query hooks + ProtectedRoute migration
 - [ ] 03-04 — Tenant pages (list, create, edit)
 - [ ] 03-05 — Fee pages (detail, fee management)
 
@@ -90,6 +97,7 @@ UI design contract approved on 2026-05-23. See `.planning/phases/03-tenant-fee-u
 ### Phase 3 — Tenant & Fee UI
 - [x] 03-01 — Foundation: api helper, types, services, QueryClientProvider
 - [x] 03-02 — UI components + AppLayout
+- [x] 03-03 — TanStack Query hooks + ProtectedRoute migration
 
 ### Phase 2 — Tenant & Fee Management
 - [x] 02-01 — Database migrations & entity definitions
