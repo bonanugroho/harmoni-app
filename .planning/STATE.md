@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: Executing Phase 3
-last_updated: "2026-05-24T09:50:00.000Z"
+last_updated: "2026-05-24T16:55:00.000Z"
 progress:
   total_phases: 5
   completed_phases: 2
   total_plans: 14
-  completed_plans: 10
-  percent: 71
+  completed_plans: 11
+  percent: 79
 ---
 
 # State
@@ -57,6 +57,14 @@ See: `.planning/PROJECT.md` (updated 2026-05-19)
 - **D-03:** Refactored `services/auth.ts` to use `request()` — removed duplicate `API_BASE_URL` and `parseError`
 - **D-07:** Added `QueryClientProvider` in `App.tsx` wrapping routes with `staleTime: 30000`, `retry: 1`
 
+## Key Decisions (Phase 3, Plan 02)
+
+- **D-10:** Created Input/Select/DatePicker reusable form field components with label/error/aria/44px
+- **D-11:** Used native `<input type="date">` for DatePicker (no extra dependency)
+- **D-12:** Created StatusBadge with UI-SPEC semantic colors, ConfirmDialog with Escape/backdrop/confirm
+- **D-14:** AppLayout sidebar uses fixed positioning with translateX for responsive behavior
+- **D-15:** Settings link gated by user role (rt_officer/rw_officer) via useAuth()
+
 ## Phase 3 Context & UI-SPEC
 
 Context gathered on 2026-05-23. Decisions documented in `.planning/phases/03-tenant-fee-ui/03-CONTEXT.md`.
@@ -72,7 +80,7 @@ UI design contract approved on 2026-05-23. See `.planning/phases/03-tenant-fee-u
 ## Phase 3 — Tenant & Fee UI
 
 - [x] 03-01 — Foundation: api helper, types, services, QueryClientProvider
-- [ ] 03-02 — UI components + AppLayout
+- [x] 03-02 — UI components + AppLayout
 - [ ] 03-03 — TanStack Query hooks + ProtectedRoute migration
 - [ ] 03-04 — Tenant pages (list, create, edit)
 - [ ] 03-05 — Fee pages (detail, fee management)
@@ -81,6 +89,7 @@ UI design contract approved on 2026-05-23. See `.planning/phases/03-tenant-fee-u
 
 ### Phase 3 — Tenant & Fee UI
 - [x] 03-01 — Foundation: api helper, types, services, QueryClientProvider
+- [x] 03-02 — UI components + AppLayout
 
 ### Phase 2 — Tenant & Fee Management
 - [x] 02-01 — Database migrations & entity definitions
