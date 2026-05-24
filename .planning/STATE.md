@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: Executing Phase 3
-last_updated: "2026-05-24T12:00:00.000Z"
+last_updated: "2026-05-24T09:50:00.000Z"
 progress:
   total_phases: 5
   completed_phases: 2
   total_plans: 14
-  completed_plans: 9
-  percent: 40
+  completed_plans: 10
+  percent: 71
 ---
 
 # State
@@ -49,7 +49,13 @@ See: `.planning/PROJECT.md` (updated 2026-05-19)
 
 ---
 
-*Last updated: 2026-05-23*
+*Completed: 2026-05-24*
+
+## Key Decisions (Phase 3, Plan 01)
+
+- **D-01:** Created shared `services/api.ts` with `request()` helper — `credentials: 'include'`, 204 handling, JSON/non-JSON auto-detection
+- **D-03:** Refactored `services/auth.ts` to use `request()` — removed duplicate `API_BASE_URL` and `parseError`
+- **D-07:** Added `QueryClientProvider` in `App.tsx` wrapping routes with `staleTime: 30000`, `retry: 1`
 
 ## Phase 3 Context & UI-SPEC
 
@@ -65,13 +71,16 @@ UI design contract approved on 2026-05-23. See `.planning/phases/03-tenant-fee-u
 
 ## Phase 3 — Tenant & Fee UI
 
-- [ ] 03-01 — Foundation: api helper, types, services, QueryClientProvider
+- [x] 03-01 — Foundation: api helper, types, services, QueryClientProvider
 - [ ] 03-02 — UI components + AppLayout
 - [ ] 03-03 — TanStack Query hooks + ProtectedRoute migration
 - [ ] 03-04 — Tenant pages (list, create, edit)
 - [ ] 03-05 — Fee pages (detail, fee management)
 
 ## Completed Plans
+
+### Phase 3 — Tenant & Fee UI
+- [x] 03-01 — Foundation: api helper, types, services, QueryClientProvider
 
 ### Phase 2 — Tenant & Fee Management
 - [x] 02-01 — Database migrations & entity definitions
