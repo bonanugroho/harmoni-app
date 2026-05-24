@@ -713,21 +713,13 @@ describe('TenantListPage', () => {
 | A3 | The API response for `GET /api/tenants/:id/fees` is `{ mandatory_fees: Fee[], voluntary_fees: Fee[] }` | API Contract | Confirmed in tenant_handler.go lines 339-342. LOW risk — verified. |
 | A4 | The `Fee` entity from API includes `type` field | Types | Backend returns separate `MandatoryFee`/`VoluntaryFee` structs that don't have a `type` discriminator. The `type` is determined by which array the fee appears in. However, `CreateFeeRequest` has a `type` field. Type definitions must account for this. MEDIUM risk — verify by running backend and checking actual response shape. |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
-1. **Fee response shape: does the backend return a `type` field on individual fee objects?**
-   - What we know: The API returns `mandatory_fees` and `voluntary_fees` as separate arrays from `ListFees`. The entity structs (`MandatoryFee`, `VoluntaryFee`) don't have a `type` field. However, the `CreateFee` POST body uses `type` as a discriminator.
-   - What's unclear: Whether individual fee responses include a `type` discriminator field or whether the frontend must infer it from which array it's in.
-   - Recommendation: When creating type definitions, include an optional `type` field on `Fee` but don't require it. Use the array position to determine fee type when the field is absent. This is forward-compatible.
+1. **Fee response shape: does the backend return a `type` field on individual fee objects?** — RESOLVED: Include optional `type` field on Fee interface, infer type from array position when absent.
 
-2. **How should the FeeForm handle the fee type selector UI when creating a fee after the tenant already has mandatory fees?**
-   - What we know: The UI-SPEC shows a "Fee Type" selector (Mandatory/Voluntary) at the top of the fee form. For tenant creation, mandatory fees are required inline with the form.
-   - What's unclear: On the tenant detail page, should creating a fee allow choosing between mandatory/voluntary, or should mandatory fees only be settable during tenant creation?
-   - Recommendation: Follow the UI-SPEC literally — the fee form on the detail page should allow both types. The backend accepts `type: 'mandatory' | 'voluntary'` in the POST body. Add client-side validation that mandatory fees don't exceed the monthly fee cap.
+2. **How should the FeeForm handle the fee type selector UI when creating a fee after the tenant already has mandatory fees?** — RESOLVED: Follow UI-SPEC literally — fee form on detail page allows both mandatory/voluntary types. Backend accepts `type` discriminator in POST body.
 
-3. **How to display fee status (paid/unpaid) when the API returns `paid_at` as null vs a date string?**
-   - What we know: `MandatoryFee.paid_at` and `VoluntaryFee.paid_at` are `*time.Time` in Go, serializing to `null` or an ISO date string in JSON.
-   - Recommendation: If `paid_at` is `null` → "Unpaid" badge. If `paid_at` is a date string → "Paid" badge. The StatusBadge component should accept a `status: 'paid' | 'unpaid'` prop.
+3. **How to display fee status (paid/unpaid) when the API returns `paid_at` as null vs a date string?** — RESOLVED: If `paid_at` is `null` → "Unpaid" badge. If `paid_at` is a date string → "Paid" badge. StatusBadge accepts `status: 'paid' | 'unpaid'` prop.
 
 ## Environment Availability
 
@@ -884,9 +876,9 @@ describe('TenantListPage', () => {
 | Architecture | HIGH | Patterns derived from reading every source file in apps/web/src/. No guessing. |
 | Pitfalls | HIGH | Based on known TanStack Query v5 issues (cache invalidation, mocking), 204 responses, responsive layout challenges. |
 
-### Open Questions
-1. Fee response object shape — backend may not include `type` field on individual fee objects (mitigated: infer type from which array the fee is in)
-2. FeeForm behavior for fee type selection on existing tenant — follow UI-SPEC literally, allow both types
+### Open Questions (RESOLVED)
+1. Fee response object shape — RESOLVED: include optional `type` field on Fee, infer from array position when absent
+2. FeeForm behavior for fee type selection on existing tenant — RESOLVED: follow UI-SPEC literally, allow both types
 
 ### Ready for Planning
 Research complete. Planner can now create PLAN.md files for Phase 3 — recommends splitting into waves:
