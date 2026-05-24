@@ -139,6 +139,15 @@ None — all components consume data through existing hooks (which use the reque
 - TenantCard onClick navigates to `/tenants/:id` — the detail page
 - TenantListPage wired and rendering in App.tsx
 
+## Self-Check: PASSED
+
+- [x] All 7 created files exist on disk
+- [x] All 4 commits present in git log (29104b1, 486381f, a19bbb7, 4271db9)
+- [x] SUMMARY.md exists in plan directory
+- [x] All 33 tests passing across 5 test files
+- [x] STATE.md updated (plan list, key decisions, progress)
+- [x] ROADMAP.md updated (4/5 plans complete)
+
 ---
 
 *Phase: 03-tenant-fee-ui*
